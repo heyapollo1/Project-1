@@ -20,7 +20,7 @@ public class Portal : MonoBehaviour
 
     public void Initialize()
     {
-        Debug.LogWarning("Initialized portal");
+        Debug.LogWarning("Initialized the portal");
 
         EventManager.Instance.StartListening("SpawnPortal", ActivatePortal);
         EventManager.Instance.StartListening("SpawnFixedPortal", ActivateFixedPortal);
@@ -81,7 +81,7 @@ public class Portal : MonoBehaviour
     private IEnumerator PortalTransition(Transform teleportLocation)
     {
         AudioManager.Instance.PlayUISound("Player_TeleportDeparture");
-        yield return new WaitForSeconds(0.25f);
+        yield return new WaitForSeconds(0.2f);
 
         Debug.Log("Progress Transition");
         EventManager.Instance.TriggerEvent("TravelDeparture", currentDestination);

@@ -21,7 +21,7 @@ public abstract class BaseHealthManager : MonoBehaviour
     protected virtual void Start() { }
 
     // Take damage and apply knockback if necessary (can be overridden)
-    public virtual void TakeDamage(float damage)
+    protected virtual void TakeDamage(float damage)
     {
         if (currentHealth <= 0)
         {

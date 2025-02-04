@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Enemy
+  - InvincibleObstacle
+  - BreakableObstacle
+  - Lightning
+  - Corpse
+  - Weapon
+  - DamageCanvas
+  - Shadow
+  - PickupItem
+  - FX
+  - PlayerSpawnPoint
+  - StatCanvas
+  - GameGrid
+  - ShopGrid
+  - Pedestal
+  - Boss
+  - SceneUI
+  - CameraIntroPosition
+  - WeaponHolder
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - Enemy
+  - Water
+  - UI
+  - Player
+  - Wall
+  - Detection
+  - Ground
+  - LowWall
+  - GroundCollider
+  - Corpse
+  - Orbs
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Background
+    uniqueID: 132621435
+    locked: 0
+  - name: Shadow
+    uniqueID: 69644765
+    locked: 0
+  - name: GameWorld
+    uniqueID: 52421491
+    locked: 0
+  - name: Default
+    uniqueID: 0
+    locked: 0

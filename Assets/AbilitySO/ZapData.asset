@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb60af0d627214cf68cc2467f979556c, type: 3}
+  m_Name: ZapData
+  m_EditorClassIdentifier: 
+  abilityTitle: Zap
+  abilityDescription: Electrocute nearby enemies.
+  abilityIcon: {fileID: 21300000, guid: cd291bef6cb38404e89811fbe0bc5852, type: 3}
+  baseDamage: 5
+  baseCooldownRate: 4
+  baseRange: 5
+  baseKnockbackForce: 4
+  baseCriticalHitChance: 0
+  baseCriticalHitDamage: 0
+  abilityPrefab: {fileID: 3881546093865162150, guid: 19d18ca77c100441ba7f578d91eee2a3, type: 3}
+  player: {fileID: 0}
+  playerStats: {fileID: 0}
+  enemyDetector: {fileID: 0}
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 8

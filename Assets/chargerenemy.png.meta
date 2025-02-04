@@ -1,0 +1,602 @@
+fileFormatVersion: 2
+guid: 403b4b059d1194316a5d61445b628fdd
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: chargerenemy_0
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 835
+        width: 155
+        height: 172
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 08a4da2ffe5a44c43b102e8d0e34a0b2
+      internalID: -188055376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_1
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 835
+        width: 155
+        height: 170
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3f764afe3711c45c18a6cb4c73760f00
+      internalID: 222597990
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_2
+      rect:
+        serializedVersion: 2
+        x: 407
+        y: 835
+        width: 155
+        height: 166
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a913c0bb85e3b4daa8732413aeabfe27
+      internalID: 163977218
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_3
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 835
+        width: 155
+        height: 175
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9065a6de65dac47eabfb423719f21919
+      internalID: -1281008312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_4
+      rect:
+        serializedVersion: 2
+        x: 784
+        y: 837
+        width: 151
+        height: 171
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f17ce3d602adf4edbb7dba6cf8b23b4f
+      internalID: 1846338099
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_5
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 644
+        width: 159
+        height: 173
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c9697d70f72e54b3b86c70dc8b3be0a3
+      internalID: 331370996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_6
+      rect:
+        serializedVersion: 2
+        x: 206
+        y: 645
+        width: 160
+        height: 173
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 65437c84ffe244d7a8592f670c23e432
+      internalID: 312228795
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_7
+      rect:
+        serializedVersion: 2
+        x: 392
+        y: 645
+        width: 166
+        height: 164
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 246333d9bddad418698f1e80492fec59
+      internalID: -668826677
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_8
+      rect:
+        serializedVersion: 2
+        x: 584
+        y: 645
+        width: 172
+        height: 154
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 75d1df40cdef246c0bb9b2827e96cc72
+      internalID: -1973238824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_9
+      rect:
+        serializedVersion: 2
+        x: 789
+        y: 709
+        width: 203
+        height: 117
+      alignment: 9
+      pivot: {x: 0.27070263, y: -0.000001565004}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f7c3c18b4c33a45838eb2e146f9d60bb
+      internalID: 101083614
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_10
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 450
+        width: 147
+        height: 190
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 83ea47d3aa0814bd9a1f0fb3b019ffc8
+      internalID: -807304308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_11
+      rect:
+        serializedVersion: 2
+        x: 202
+        y: 450
+        width: 176
+        height: 139
+      alignment: 9
+      pivot: {x: 0.31350672, y: -0.0000008782037}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: faacd82c95d2047e892a9d3250a8cd06
+      internalID: -1525811865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_12
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 452
+        width: 223
+        height: 136
+      alignment: 9
+      pivot: {x: 0.45692042, y: 0.005886078}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 922922f4c3b394038ac93ed0448165f0
+      internalID: 2072787293
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_13
+      rect:
+        serializedVersion: 2
+        x: 782
+        y: 517
+        width: 156
+        height: 179
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a63f170d25d5b41d78e1061d08e8d8d6
+      internalID: -215096437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_14
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 260
+        width: 235
+        height: 134
+      alignment: 9
+      pivot: {x: 0.48978013, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 30312a5743fee4559949fea42dacd282
+      internalID: 1354779460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_15
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 259
+        width: 180
+        height: 131
+      alignment: 9
+      pivot: {x: 0.32654572, y: -0.00000046591722}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0e06c9a6294234614a2caa5544aead8b
+      internalID: 1643115346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_16
+      rect:
+        serializedVersion: 2
+        x: 486
+        y: 256
+        width: 201
+        height: 138
+      alignment: 9
+      pivot: {x: 0.46579692, y: 0.001826853}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bed94aeed473441e982a9e2d9ced0836
+      internalID: -1918351906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_18
+      rect:
+        serializedVersion: 2
+        x: 772
+        y: 322
+        width: 186
+        height: 136
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 57d01d891629b486c80d98cbbfbd97ff
+      internalID: 1610070359
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_20
+      rect:
+        serializedVersion: 2
+        x: 784
+        y: 131
+        width: 151
+        height: 177
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ec1a973a224874d279c39b902e49e346
+      internalID: 186667477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_23
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 66
+        width: 161
+        height: 157
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6cce6c592e5ed4c65b3a664260fa3819
+      internalID: -1578327501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_24
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 69
+        width: 163
+        height: 141
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9de52af4034e24ce2acaa1235308589d
+      internalID: 719917890
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: chargerenemy_25
+      rect:
+        serializedVersion: 2
+        x: 397
+        y: 70
+        width: 168
+        height: 130
+      alignment: 7
+      pivot: {x: 0.5, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1551d9b82951146bfa611a2e4eebef72
+      internalID: 315585304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    nameFileIdTable:
+      chargerenemy_0: -188055376
+      chargerenemy_1: 222597990
+      chargerenemy_10: -807304308
+      chargerenemy_11: -1525811865
+      chargerenemy_12: 2072787293
+      chargerenemy_13: -215096437
+      chargerenemy_14: 1354779460
+      chargerenemy_15: 1643115346
+      chargerenemy_16: -1918351906
+      chargerenemy_17: -933144965
+      chargerenemy_18: 1610070359
+      chargerenemy_19: 750157352
+      chargerenemy_2: 163977218
+      chargerenemy_20: 186667477
+      chargerenemy_21: 27277812
+      chargerenemy_22: -1587533192
+      chargerenemy_23: -1578327501
+      chargerenemy_24: 719917890
+      chargerenemy_25: 315585304
+      chargerenemy_3: -1281008312
+      chargerenemy_4: 1846338099
+      chargerenemy_5: 331370996
+      chargerenemy_6: 312228795
+      chargerenemy_7: -668826677
+      chargerenemy_8: -1973238824
+      chargerenemy_9: 101083614
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

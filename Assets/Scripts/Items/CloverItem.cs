@@ -2,34 +2,61 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CloverItem : ItemData
+public class CloverItem : BaseItem
 {
-    float criticalStrikeDamageIncrease = 50f;
+    private List<StatModifier> appleModifiers;
 
-    public CloverItem(Sprite cloverIcon)
+    private static readonly Dictionary<Rarity, List<StatModifier>> rarityModifiers = new()
     {
-        itemName = "Clover";
-        description = "Critical strikes deal 50% increased damage";
-        icon = cloverIcon;
-        price = 50;
-        itemType = ItemType.Simple;
+        { Rarity.Common, new List<StatModifier> { new(StatType.CriticalHitChance, 10f) } },
+        { Rarity.Rare, new List<StatModifier> { new(StatType.CriticalHitChance, 15f) } },
+        { Rarity.Epic, new List<StatModifier> { new(StatType.CriticalHitChance, 20f) } },
+        { Rarity.Legendary, new List<StatModifier> { new(StatType.CriticalHitChance, 25f) } }
+    };
+
+    public CloverItem(Sprite cloverIcon, Rarity rarity) : base(
+        "Clover", cloverIcon, 50, ItemType.Simple, rarity,
+        rarityModifiers[rarity])
+    {
+        UpdateDescription();
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Upgrade()
     {
-        StatModifier cloverModifier = new StatModifier(
-             StatType.CriticalHitDamage, flatBonus: 0f, percentBonus: criticalStrikeDamageIncrease
-         );
-
-        playerStats.ApplyModifier(cloverModifier);
+        if (currentRarity < Rarity.Legendary)
+        {
+            currentRarity++;
+            value = Mathf.RoundToInt(value * GetRarityMultiplier());
+            modifiers = rarityModifiers[currentRarity];
+            UpdateDescription();
+        }
     }
-
-    public override void Remove(PlayerStatManager playerStats)
+    
+    public bool TryGetNextUpgradeModifier(out StatModifier nextModifier)
     {
-        StatModifier cloverModifier = new StatModifier(
-            StatType.CriticalHitDamage, flatBonus: 0f, percentBonus: criticalStrikeDamageIncrease
-        );
+        if (currentRarity < Rarity.Legendary)
+        {
+            Rarity nextRarity = currentRarity + 1;
+            if (rarityModifiers.TryGetValue(nextRarity, out var nextMods))
+            {
+                nextModifier = nextMods[0];
+                return true;
+            }
+        }
 
-        playerStats.RemoveModifier(cloverModifier);
+        nextModifier = null;
+        return false;
+    }
+    
+    public override string UpdateDescription(bool showUpgrade = false)
+    {
+        float currentBonus = modifiers[0].flatBonus;
+        string upgradePart = "";
+
+        if (showUpgrade && TryGetNextUpgradeModifier(out var next))
+        {
+            upgradePart = $" >> <color=#00FF00>{next.flatBonus}%</color>";
+        }
+        return description = $"Increase critical hit chance by {currentBonus}%{upgradePart}.";
     }
 }

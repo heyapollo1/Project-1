@@ -2,51 +2,65 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PotionItem : ItemData
+public class PotionItem : BaseItem
 {
-    private float healAmount = 10f;
-    private float healInterval = 5f;
-    private bool isHealing = false;
-    private HealOverTimeEffect activeEffect;
+    private float healAmount;
+    private PotionEffect potionEffect;
 
-    public PotionItem(Sprite potionIcon)
+    private static readonly Dictionary<Rarity, float> GetHealAmount = new()
     {
-        itemName = "Potion";
-        description = "Heals the player for a small amount every 5 seconds.";
-        icon = potionIcon;
-        price = 50;
-        itemType = ItemType.Simple;
+        { Rarity.Common, 5f },
+        { Rarity.Rare, 10f },
+        { Rarity.Epic, 15f },
+        { Rarity.Legendary, 20f }
+    };
+    
+    private static readonly List<TagType> ClassTags = new()
+    {
+        TagType.Junk
+    };
+    
+    public PotionItem(Sprite potionIcon, Rarity rarity) : base(
+        "Potion", potionIcon, 50, ItemType.Simple, rarity, null, ClassTags, null, new PotionEffect(GetHealAmount[rarity]))
+    {
+        healAmount = GetHealAmount[rarity];
+        potionEffect = (PotionEffect)passiveEffect;
+        UpdateDescription();
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Upgrade()
     {
-        PlayerHealthManager healthManager = PlayerHealthManager.Instance;
-        if (!isHealing && healthManager != null)
+        if (currentRarity < Rarity.Legendary)
         {
-            Debug.Log("PotionItem: Begin");
-            isHealing = true;
-
-            activeEffect = new HealOverTimeEffect(healAmount, healInterval, healthManager, PlayerCombat.Instance, isEternal: true);
-
-            StatusEffectManager.Instance.ApplyStatusEffect(healthManager.gameObject, () => activeEffect, true);
-        }
-        else
-        {
-            Debug.Log("PotionItem: Healing effect not started. Either already healing or healthManager is null.");
+            currentRarity++;
+            value = Mathf.RoundToInt(value * GetRarityMultiplier());
+            healAmount = GetHealAmount[currentRarity];
+            potionEffect.IncreaseHealAmount(healAmount); // Incremental scaling
+            UpdateDescription();
         }
     }
-
-    public override void Remove(PlayerStatManager playerStats)
+    
+    public bool TryGetNextUpgradeModifier(out float nextHealAmount)
     {
-        PlayerHealthManager healthManager = PlayerHealthManager.Instance;
-
-        if (isHealing && activeEffect != null && healthManager != null)
+        if (currentRarity < Rarity.Legendary)
         {
-            Debug.Log("PotionItem: Stopping healing effect.");
-
-            healthManager.RemoveStatusEffect(activeEffect);
-
-            isHealing = false;
+            Rarity nextRarity = currentRarity + 1;
+            if (GetHealAmount.TryGetValue(nextRarity, out nextHealAmount))
+                return true;
         }
+        nextHealAmount = 0f;
+        return false;
     }
+    
+    public override string UpdateDescription(bool showUpgrade = false)
+    {
+        string upgradePart = "";
+
+        if (showUpgrade && TryGetNextUpgradeModifier(out float nextChance))
+        {
+            upgradePart = $" >> <color=#00FF00>{nextChance * 100}%</color>";
+        }
+        return description = $"Regenerates {(healAmount * 100):0}%{upgradePart} HP every 5 seconds.";
+    }
+    
 }

@@ -1,49 +1,84 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Game.Utils;
 using System;
 
-public class RubyItem : ItemData, ICombatEffect
+public class RubyItem : BaseItem
 {
-    private StatModifier rubyDamageModifier;
-    private StatModifier rubyMovementSpeedModifier;
-    private float healthThreshold = 0.5f;
-    private bool isBuffActive = false;
-
-    public RubyItem(Sprite rubyIcon)
+    private static readonly List<TagType> ClassTags = new()
     {
-        itemName = "Ruby";
-        description = "Gain increased damage and movement speed when health is below 50%.";
-        icon = rubyIcon;
-        price = 50;
-        itemType = ItemType.Combat;
-
-        rubyDamageModifier = new StatModifier(StatType.Damage, flatBonus: 0f, percentBonus: 30f);
-        rubyMovementSpeedModifier = new StatModifier(StatType.MovementSpeed, flatBonus: 0f, percentBonus: 30f);
-    }
-
-    public override void Apply(PlayerStatManager playerStats) { /* Initial Setup */ }
-    public override void Remove(PlayerStatManager playerStats) { /* Cleanup */ }
-
-    public void OnHealthChanged(float currentHealth, float maxHealth, PlayerStatManager playerStats)
+        TagType.Junk
+    };
+            
+    private static readonly Dictionary<Rarity, List<StatModifier>> rarityModifiers = new()
     {
-        if (currentHealth / maxHealth < healthThreshold && !isBuffActive)
+        { Rarity.Common, new List<StatModifier> { new (StatType.Damage, 0f, 50f) } },
+        { Rarity.Rare, new List<StatModifier> { new (StatType.Damage, 0f, 75f) } },
+        { Rarity.Epic, new List<StatModifier> { new (StatType.Damage, 0f, 100f) } },
+        { Rarity.Legendary, new List<StatModifier> { new (StatType.Damage, 0f, 125f) } }
+    };
+    
+    private float damageMultiplier;
+    
+    public RubyItem(Sprite rubyIcon, Rarity rarity) 
+        : base("Ruby Item", rubyIcon, 50, ItemType.Combat, rarity, rarityModifiers[rarity], ClassTags,
+            new RubyItemEffect(ModifierUtils.GetPercentBonus(rarityModifiers[rarity], StatType.Damage)))
+    {
+        damageMultiplier = ModifierUtils.GetPercentBonus(rarityModifiers[rarity], StatType.Damage);
+        UpdateDescription();
+    }
+    
+    private static float GetBonusDamage(List<StatModifier> modifiers)
+    {
+        return modifiers.Find(m => m.statType == StatType.Damage)?.percentBonus ?? 0f;
+    }
+    
+    public override void Upgrade()
+    {
+        if (currentRarity < Rarity.Legendary)
         {
-            Debug.Log("Applying Ruby buff...");
-            playerStats.ApplyModifier(rubyDamageModifier);
-            playerStats.ApplyModifier(rubyMovementSpeedModifier);
-            isBuffActive = true;
-        }
-        else if (currentHealth / maxHealth >= healthThreshold && isBuffActive)
-        {
-            Debug.Log("Removing Ruby buff...");
-            playerStats.RemoveModifier(rubyDamageModifier);
-            playerStats.RemoveModifier(rubyMovementSpeedModifier);
-            isBuffActive = false;
+            currentRarity++;
+            value = Mathf.RoundToInt(value * GetRarityMultiplier());
+            
+            if (rarityModifiers.ContainsKey(currentRarity))
+            {
+                modifiers = rarityModifiers[currentRarity];
+                damageMultiplier = ModifierUtils.GetPercentBonus(rarityModifiers[currentRarity], StatType.Damage);
+                combatEffect = new RubyItemEffect(GetBonusDamage(modifiers));
+            }
+            else
+            {
+                Debug.LogError($"No modifiers found for upgraded RubyItem rarity {currentRarity}.");
+            }
+            UpdateDescription();
         }
     }
-
-    public void OnEnemyKilled(GameObject enemy, PlayerStatManager playerStats) {}
-    public void OnHit(GameObject target, PlayerStatManager playerStats) {}
-    public float ModifyDamage(float damage, GameObject target) => damage;
+    
+    public bool TryGetNextUpgradeModifier(out StatModifier nextModifier)
+    {
+        if (currentRarity < Rarity.Legendary)
+        {
+            Rarity nextRarity = currentRarity + 1;
+            if (rarityModifiers.TryGetValue(nextRarity, out var nextMods))
+            {
+                nextModifier = nextMods.Find(m => m.statType == StatType.Damage);
+                return true;
+            }
+        }
+        nextModifier = null;
+        return false;
+    }
+    
+    public override string UpdateDescription(bool showUpgrade = false)
+    {
+        float currentBonus = ModifierUtils.GetPercentBonus(modifiers, StatType.Damage);
+        string upgradePart = "";
+        
+        if (showUpgrade && TryGetNextUpgradeModifier(out var next))
+        {
+            upgradePart = $" >> <color=#00FF00>{next.percentBonus}%</color>";
+        }
+        return description = $"Deal {currentBonus}%{upgradePart} bonus damage when under half health.";
+    }
 }

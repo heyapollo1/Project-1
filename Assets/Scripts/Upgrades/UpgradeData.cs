@@ -11,12 +11,7 @@ public abstract class UpgradeData
     public Sprite icon;
     public int upgradeLevel = 1;         
 
-    public abstract void Apply(PlayerStatManager playerStats);
+    public abstract void Apply(AttributeManager playerStats);
 
-    public abstract void ScaleUpgrade(PlayerStatManager playerStats);
-
-    internal void ScaleUpgrade(object playerStats)
-    {
-        throw new NotImplementedException();
-    }
+    public abstract void ScaleUpgrade(AttributeManager playerStats);
 }

@@ -16,7 +16,8 @@ public class DeathState : IEnemyState
         }
         else if (enemy.deathType == DeathType.Standard)
         {
-            enemy.animator.SetTrigger("Die");
+            Debug.Log("Standard death");
+            enemy.animator.SetBool("isDead", true);
             enemy.InterruptCurrentAbility();
             enemy.RemoveComponentsOnDeath();
             enemy.StartCoroutine(HandleStandardDeath(enemy));
@@ -41,7 +42,7 @@ public class DeathState : IEnemyState
     private IEnumerator HandleBossDeath(EnemyAI enemy)
     {
         yield return new WaitForSeconds(3f);
-
+        
         VisualFeedbackManager visualFeedback = enemy.GetComponent<VisualFeedbackManager>();
         if (visualFeedback != null)
         {
@@ -53,7 +54,9 @@ public class DeathState : IEnemyState
 
     private IEnumerator HandleStandardDeath(EnemyAI enemy)
     {
+        Debug.Log("Animating death");
         yield return new WaitForSeconds(enemy.animator.GetCurrentAnimatorStateInfo(0).length);
+        enemy.animator.SetBool("isDead", false);
 
         yield return new WaitForSeconds(1f);
 
@@ -62,7 +65,7 @@ public class DeathState : IEnemyState
         {
             yield return visualFeedback.FadeOut(1f, enemy.gameObject); // 1 second fade-out
         }
-
+        Debug.Log("death complete");
         EnemyPoolManager.Instance.ReturnEnemy(enemy.gameObject);
     }
 
@@ -75,7 +78,6 @@ public class DeathState : IEnemyState
         {
             yield return visualFeedback.FadeOut(0.3f, enemy.gameObject);
         }
-
         EnemyPoolManager.Instance.ReturnEnemy(enemy.gameObject);
     }
 
@@ -88,7 +90,6 @@ public class DeathState : IEnemyState
         {
             yield return visualFeedback.FadeOut(1f, enemy.gameObject); // 1 second fade-out
         }
-
         EnemyPoolManager.Instance.DestroyEnemy(enemy.gameObject);
     }
 

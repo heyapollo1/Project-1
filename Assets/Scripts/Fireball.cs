@@ -77,7 +77,7 @@ public class Fireball : MonoBehaviour
             {
                 Vector2 knockbackDirection = (collision.transform.position - transform.position).normalized;
 
-                enemyHealth.TakeDamage(damage, knockbackDirection, knockbackForce, IsCriticalHit);
+                enemyHealth.TakeDamage(damage, knockbackDirection, knockbackForce, DamageSource.Player, IsCriticalHit);
             }
             StartCoroutine(Impact());
         }

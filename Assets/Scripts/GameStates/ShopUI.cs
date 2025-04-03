@@ -46,7 +46,7 @@ public class ShopUI : MonoBehaviour
         shopPanel.SetActive(false);
     }
 
-    public void DisplayItems(List<ItemData> items)
+    public void DisplayItems(List<BaseItem> items)
     {
         // Clear previous items
         foreach (Transform child in shopItemContainer)
@@ -61,7 +61,7 @@ public class ShopUI : MonoBehaviour
         }
     }
 
-    private void CreateShopItemCard(ItemData item)
+    private void CreateShopItemCard(BaseItem item)
     {
         GameObject itemCard = Instantiate(shopManager.shopItemCardPrefab, shopItemContainer);
 
@@ -74,12 +74,12 @@ public class ShopUI : MonoBehaviour
         if (itemNameText != null) itemNameText.text = item.itemName;
         if (itemIconImage != null) itemIconImage.sprite = item.icon;
         if (itemDescriptionText != null) itemDescriptionText.text = item.description;
-        if (itemCurrencyText != null) itemCurrencyText.text = $"${item.price}";
+        if (itemCurrencyText != null) itemCurrencyText.text = $"${item.value}";
 
-        itemButton.onClick.AddListener(() => OnBuyButtonPressed(item, itemCard));
+        //itemButton.onClick.AddListener(() => OnBuyButtonPressed(item, itemCard));
     }
 
-    public void OnBuyButtonPressed(ItemData selectedItem, GameObject itemCard)
+   /* public void OnBuyButtonPressed(BaseItem selectedItem, GameObject itemCard)
     {
         bool successfulPurchase = shopManager.TryBuyItem(selectedItem);
         if (successfulPurchase)
@@ -90,7 +90,7 @@ public class ShopUI : MonoBehaviour
         {
             Debug.Log("Not enough funds or inventory space.");
         }
-    }
+    }*/
 
     private void MarkItemAsSold(GameObject itemCard)
     {
@@ -120,10 +120,9 @@ public class ShopUI : MonoBehaviour
             itemButton.interactable = false;
         }
     }
-
-
+    
     private void RerollItems()
     {
-        shopManager.RerollItems();
+        //shopManager.RerollItems();
     }
 }

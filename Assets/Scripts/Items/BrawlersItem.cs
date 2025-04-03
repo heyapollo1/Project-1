@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BrawlersItem : ItemData, ICombatEffect
+/*public class BrawlersItem : ItemData, ICombatEffect
 {
     float brawlerDamageIncrease = 30f;
     float range = 3.5f;
@@ -19,19 +19,19 @@ public class BrawlersItem : ItemData, ICombatEffect
         enemyDetector = player.GetComponent<EnemyDetector>();
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Apply(AttributeManager playerStats)
     {
     }
 
-    public override void Remove(PlayerStatManager playerStats)
+    public override void Remove(AttributeManager playerStats)
     {
     }
 
-    public void OnHit(GameObject target, PlayerStatManager playerStats) { }
+    public void OnHit(GameObject target, AttributeManager playerStats) { }
 
-    public void OnHealthChanged(float currentHealth, float maxHealth, PlayerStatManager playerStats) { }
+    public void OnHealthChanged(float currentHealth, float maxHealth, AttributeManager playerStats) { }
 
-    public void OnEnemyKilled(GameObject enemy, PlayerStatManager playerStats) { }
+    public void OnEnemyKilled(GameObject enemy, AttributeManager playerStats) { }
 
     public float ModifyDamage(float damage, GameObject target)
     {
@@ -53,4 +53,4 @@ public class BrawlersItem : ItemData, ICombatEffect
     }
 
 
-}
+}*/

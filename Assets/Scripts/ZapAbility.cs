@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ZapAbility : PlayerAbilityBase
+/*public class ZapAbility : PlayerAbilityBase
 {
+    
     [Header("Zap Specials")]
     public float baseChainAmount = 0;
     public bool hasChainLightning = false;
@@ -29,7 +30,7 @@ public class ZapAbility : PlayerAbilityBase
     {
         Debug.Log("Initializing Zap Ability...");
 
-        abilityData.playerStats = PlayerStatManager.Instance;
+        abilityData.playerStats = AttributeManager.Instance;
         abilityData.player = GameObject.FindWithTag("Player").transform;
         abilityData.abilityPrefab = Resources.Load<GameObject>("PlayerAbilities/ZapAbility");
         abilityData.enemyDetector = abilityData.player.GetComponent<EnemyDetector>();
@@ -56,7 +57,7 @@ public class ZapAbility : PlayerAbilityBase
         currentCooldownRate = abilityData.baseCooldownRate;
         currentRange = abilityData.baseRange;
         currentKnockbackForce = abilityData.baseKnockbackForce;
-        currentCriticalHitDamage = PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage);
+        currentCriticalHitDamage = AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage);
         currentChainAmount = baseChainAmount;
     }
 
@@ -97,7 +98,7 @@ public class ZapAbility : PlayerAbilityBase
             float finalDamage = isCritical ? currentCriticalHitDamage : currentDamage;
             Vector2 knockbackDirection = (enemy.transform.position - originPosition).normalized;
 
-            enemyHealth.TakeDamage(finalDamage, knockbackDirection, currentKnockbackForce, isCritical);
+            enemyHealth.TakeDamage(finalDamage, knockbackDirection, currentKnockbackForce, DamageSource.Player, isCritical);
         }
         else
         {
@@ -152,7 +153,7 @@ public class ZapAbility : PlayerAbilityBase
         currentDamage = abilityData.playerStats.GetStatValue(StatType.Damage, abilityData.baseDamage);
         currentRange = abilityData.playerStats.GetStatValue(StatType.Range, abilityData.baseRange);
         currentCooldownRate = abilityData.playerStats.GetStatValue(StatType.CooldownRate, abilityData.baseCooldownRate);
-        currentCriticalHitDamage = abilityData.playerStats.GetStatValue(StatType.CriticalHitDamage, PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage));
+        currentCriticalHitDamage = abilityData.playerStats.GetStatValue(StatType.CriticalHitDamage, AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage));
         currentChainAmount = abilityData.playerStats.GetStatValue(StatType.Zap_ChainLightning, baseChainAmount);
     }
 
@@ -189,4 +190,4 @@ public class ZapAbility : PlayerAbilityBase
         Gizmos.color = Color.blue;  // Set the color of the gizmo
         Gizmos.DrawWireSphere(transform.position, currentRange);  // Draw a wireframe circle with baseRange as the radius
     }
-}
+}*/

@@ -4,33 +4,61 @@ using UnityEngine;
 
 public class StunEffect : StatusEffect
 {
-    private EnemyAI enemy;
+    private float stunDuration;
+    private float elapsedTime = 0f;
+    
+    private GameObject stunFX;
+    private ILivingEntity stunTarget;
 
-    public StunEffect(float duration, EnemyHealthManager targetEnemy, MonoBehaviour owner)
-        : base(duration, 0, owner, isEternal: false)
+    private bool isStunned = false;
+
+    public StunEffect(float duration, ILivingEntity target, MonoBehaviour owner)
+        : base(duration, 0, target, owner, isEternal: false)
     {
-        enemy = targetEnemy.GetComponent<EnemyAI>();
+        stunTarget = target;
+        stunDuration = duration;
     }
-
+    
+    public void IncreaseStunDuration(float additionalDuration)
+    {
+        stunDuration += additionalDuration;
+        Debug.Log("Stun duration refreshed to " + stunDuration);
+    }
+    
     protected override IEnumerator EffectCoroutine()
     {
-        if (enemy != null)
+        if (!isStunned && stunTarget != null)
         {
-            enemy.TransitionToState(enemy.stunnedState);
-
-            Debug.Log($"{enemy.gameObject.name} is stunned for {Duration} seconds.");
-
-            yield return new WaitForSeconds(Duration);
-
-            enemy.TransitionToState(enemy.idleState);
+            isStunned = true;
+            stunTarget.InflictStun(stunDuration);
+            Debug.Log($"Stun applied to {stunTarget}, for {stunDuration} seconds.");
         }
 
-        Remove(enemy.gameObject, false);
+        while (elapsedTime < stunDuration && isActive)
+        {
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        RemoveEffect();
     }
 
     public override void ResetDuration(float newDuration, float newDamage)
     {
-        Duration = newDuration;
-        Debug.Log("Stun duration refreshed to " + newDuration);
+        //play stun fx
+        IncreaseStunDuration(newDuration);
+        if (!isActive)
+        {
+            ApplyEffect();
+        }
+    }
+    
+    public override void RemoveEffect()
+    {
+        var autoDestroy = stunFX.GetComponent<AutoDestroyParticle>();
+        if (autoDestroy != null) autoDestroy.StopEffect();
+        stunFX.transform.SetParent(FXManager.Instance.transform);
+        FXManager.Instance.ReturnToPool(stunFX, "StunFX");
+        base.RemoveEffect();
     }
 }

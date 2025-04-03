@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ea6350c97e7e4047a2c0e4a900f0903, type: 3}
+  m_Name: PistolData
+  m_EditorClassIdentifier: 
+  weaponTitle: Pistol
+  weaponDescription: Small gun
+  baseDamage: 1
+  baseCooldownRate: 0.3
+  baseRange: 6
+  baseKnockbackForce: 0
+  baseCriticalHitChance: 0
+  baseRangeIncrease: 0
+  baseCriticalHitDamage: 0
+  price: 50
+  weaponPrefab: {fileID: 610272532110256942, guid: 037351928ee634206aeaef48dc42c1c1, type: 3}
+  weaponSprites:
+  - {fileID: 1426003091, guid: 2d6fac8dd1d8649dc9c9fe0014a00f19, type: 3}
+  - {fileID: -1049068606, guid: 2d6fac8dd1d8649dc9c9fe0014a00f19, type: 3}
+  - {fileID: 1397820603, guid: 2d6fac8dd1d8649dc9c9fe0014a00f19, type: 3}
+  - {fileID: -1049068606, guid: 2d6fac8dd1d8649dc9c9fe0014a00f19, type: 3}
+  - {fileID: 1426003091, guid: 2d6fac8dd1d8649dc9c9fe0014a00f19, type: 3}
+  - {fileID: 1051671509, guid: 2d6fac8dd1d8649dc9c9fe0014a00f19, type: 3}
+  - {fileID: 787469425, guid: 2d6fac8dd1d8649dc9c9fe0014a00f19, type: 3}
+  - {fileID: 1051671509, guid: 2d6fac8dd1d8649dc9c9fe0014a00f19, type: 3}
+  weaponIcon: {fileID: -1049068606, guid: 2d6fac8dd1d8649dc9c9fe0014a00f19, type: 3}
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  defaultRarity: 0
+  rarityUpgrades:
+  - rarityTier: 0
+    additionalDamage: 0
+    cooldownReduction: 0
+    rangeIncrease: 0
+    uniqueAttributes: []
+  - rarityTier: 1
+    additionalDamage: 10
+    cooldownReduction: 0
+    rangeIncrease: 0
+    uniqueAttributes: []
+  - rarityTier: 2
+    additionalDamage: 20
+    cooldownReduction: 0
+    rangeIncrease: 0
+    uniqueAttributes: []
+  - rarityTier: 3
+    additionalDamage: 30
+    cooldownReduction: 0
+    rangeIncrease: 0
+    uniqueAttributes: []
+  associatedTags: 
+  references:
+    version: 2
+    RefIds: []

@@ -26,43 +26,72 @@ public class InputManager : BaseManager
         {
             HandleGameplayInput();
         }
-        else if (GameStateManager.Instance.CurrentState == GameState.Paused)
-        {
-            HandlePauseMenuInput();
-        }
         else if (GameStateManager.Instance.CurrentState == GameState.LevelUp)
         {
             HandleLevelUpInput();
+        }
+        else if (GameStateManager.Instance.CurrentState == GameState.Paused)
+        {
+            HandlePauseMenuInput();
         }
     }
 
     private void HandleGameplayInput()
     {
+        if (CutsceneManager.Instance.CutsceneActive())
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                UIManager.Instance.ShowPauseMenu();
+                Debug.Log("Pause triggered");
+            }
+        }
+        else
+        {
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                Debug.Log("C");
+                IInteractable currentTooltip = TooltipManager.Instance.GetActiveTooltip();
+                Debug.Log("C");
+                if (currentTooltip == null) return;
+                Debug.Log($"C: {currentTooltip}");
+                currentTooltip.Interact();
+            }
+            
+            if (Input.GetKeyDown(KeyCode.R) &&
+                EncounterManager.Instance.GetCurrentEncounterType() == EncounterType.Shop)
+            {
+                ShopManager.Instance.RerollShop();
+            }
+
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                DodgeManager.Instance.TriggerDodge();
+            }
+
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                XPManager.Instance.GetFreeXP(50);
+            }
+
+            if (Input.GetKeyDown(KeyCode.H))
+            {
+                PlayerHealthManager.Instance.AdjustHealthByPercentage(0.2f);
+            }
+
+            if (Input.GetKeyDown(KeyCode.J))
+            {
+                PlayerHealthManager.Instance.AdjustHealthByPercentage(-0.2f);
+            }
+        }
+    }
+
+    private void HandleLevelUpInput()
+    {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            EventManager.Instance.TriggerEvent("OpenPauseMenu");
+            UIManager.Instance.ShowPauseMenu();
             Debug.Log("Pause triggered");
-        }
-
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            EventManager.Instance.TriggerEvent("TriggerDodge");
-        }
-
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            EventManager.Instance.TriggerEvent("ToggleAutoAim");
-        }
-
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-            EventManager.Instance.TriggerEvent("InstantLevelUp");
-        }
-
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            AudioManager.Instance.PlayUISound("UI_Open");
-            EventManager.Instance.TriggerEvent("TestShop");
         }
     }
 
@@ -71,22 +100,6 @@ public class InputManager : BaseManager
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             PauseMenu.Instance.OnResumeClicked();
-        }
-    }
-
-    private void HandleLevelUpInput()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            UpgradeSystemUI.Instance.CloseUpgradePanel();
-        }
-    }
-
-    private void HandleShoppingInput()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            ShopUI.Instance.CloseShop();
         }
     }
 }

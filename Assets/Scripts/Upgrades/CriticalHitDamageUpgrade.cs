@@ -14,7 +14,7 @@ public class CriticalHitDamageUpgrade : UpgradeData
         icon = criticalHitDamageIcon;
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Apply(AttributeManager playerStats)
     {
         // Create a new modifier for attack speed
         StatModifier criticalHitDamageModifier = new StatModifier(
@@ -27,7 +27,7 @@ public class CriticalHitDamageUpgrade : UpgradeData
         Debug.Log($"CriticalHitChance upgraded. Current CriticalHitDamage: {playerStats.GetStatValue(StatType.CriticalHitDamage, 0f)}");
     }
 
-    public override void ScaleUpgrade(PlayerStatManager playerStats)
+    public override void ScaleUpgrade(AttributeManager playerStats)
     {
         upgradeLevel++;
         Apply(playerStats);  // Re-apply the movement speed boost at the new level

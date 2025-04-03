@@ -13,37 +13,32 @@ public class GameManager : BaseManager
 
     protected override void OnInitialize()
     {
-        EventManager.Instance.StartListening("LoadMainMenu", LoadMainMenu);
-        EventManager.Instance.StartListening("LoadGameplay", LoadGameplay);
-        EventManager.Instance.StartListening("OpenPauseMenu", PauseGame);
-        //EventManager.Instance.StartListening("ClosePauseMenuAndResumeGame", UnpauseGame);
-        EventManager.Instance.StartListening("CloseGameOverMenu", HideGameOverMenu);
-        EventManager.Instance.StartListening("CloseVictoryMenu", HideVictoryMenu);
-        EventManager.Instance.StartListening("QuitGame", ExitGame);
+        EventManager.Instance.StartListening("StartNewGame", StartNewGame);
+        EventManager.Instance.StartListening("LoadSaveFile", LoadSaveFile);
+        
         EventManager.Instance.StartListening("PlayerDied", HandlePlayerDeath);
-        //EventManager.Instance.StartListening("CutsceneFinished", HandleVictory);
+        EventManager.Instance.StartListening("PlayerRevived", HandlePlayerRevive);
+        
         EventManager.Instance.StartListening("LevelUp", HandleLevelUp);
         EventManager.Instance.StartListening("EndLevelUp", HideLevelUp);
-        EventManager.Instance.StartListening("StageComplete", HandleStageEnd);
-        EventManager.Instance.StartListening("TravelDeparture", HandleMapTransition);
-
+        
+        EventManager.Instance.StartListening("GameVictory", ClaimVictory);
+        EventManager.Instance.StartListening("LoseGame", ClaimLoss);
     }
 
     private void OnDestroy()
     {
-        EventManager.Instance.StopListening("LoadMainMenu", LoadMainMenu);
-        EventManager.Instance.StopListening("LoadGameplay", LoadGameplay);
-        EventManager.Instance.StopListening("OpenPauseMenu", PauseGame);
-        //EventManager.Instance.StopListening("ClosePauseMenuAndResumeGame", UnpauseGame);
-        EventManager.Instance.StopListening("CloseGameOverMenu", HideGameOverMenu);
-        EventManager.Instance.StopListening("CloseVictoryMenu", HideVictoryMenu);
-        EventManager.Instance.StopListening("QuitGame", ExitGame);
+        EventManager.Instance.StopListening("StartNewGame", StartNewGame);
+        EventManager.Instance.StopListening("LoadSaveFile", LoadSaveFile);
+        
         EventManager.Instance.StopListening("PlayerDied", HandlePlayerDeath);
-        //EventManager.Instance.StopListening("CutsceneFinished", HandleVictory);
+        EventManager.Instance.StopListening("PlayerRevived", HandlePlayerRevive);
+        
         EventManager.Instance.StopListening("LevelUp", HandleLevelUp);
         EventManager.Instance.StopListening("EndLevelUp", HideLevelUp);
-        EventManager.Instance.StopListening("StageComplete", HandleStageEnd);
-        EventManager.Instance.StopListening("TravelDeparture", HandleMapTransition);
+        
+        EventManager.Instance.StopListening("GameVictory", ClaimVictory);
+        EventManager.Instance.StopListening("LoseGame", ClaimLoss);
     }
 
     private void Awake()
@@ -90,8 +85,7 @@ public class GameManager : BaseManager
 
     public IEnumerator WaitForDependenciesAndStartGame()
     {
-
-        string[] requiredSystems = { "SpawnManager", "StageUI", "GridManager", "FlowFieldManager", "AbilityUI", "CameraManager", "CutsceneManager"};
+        string[] requiredSystems = { "SpawnManager", "GridManager", "FlowFieldManager", "AbilityUI", "CameraManager", "CutsceneManager"};
 
         Debug.Log("Waiting for all dependencies...");
         while (!AreAllSystemsReady(requiredSystems))
@@ -101,7 +95,7 @@ public class GameManager : BaseManager
 
         Debug.Log("All dependencies are ready. Starting game.");
         GameStateManager.Instance.SetGameState(GameState.Playing);
-        EventManager.Instance.TriggerEvent("GameStarted");
+        //EventManager.Instance.TriggerEvent("GameStarted"); //testing enemy behaviour
     }
 
     private void Start()
@@ -113,82 +107,55 @@ public class GameManager : BaseManager
     {
         CustomSceneManager.Instance.LoadScene("MainMenu");
         GameStateManager.Instance.SetGameState(GameState.MainMenu);
-        Debug.Log("MainMenu loaded, Time.timeScale = " + Time.timeScale);
     }
 
-    public void LoadGameplay()
+    public void StartNewGame()
     {
-        Debug.Log("Gameplay load trigger");
-        CustomSceneManager.Instance.LoadScene("GameScene");
-        //(WaitForDependenciesAndStartGame());
-        Debug.Log("Gameplay loaded, Time.timeScale = " + Time.timeScale);
+        Debug.Log("New game trigger");
+        GameData newGameData = new GameData { isNewGame = true };
+        //SaveManager.SaveGame(newGameData);
+        CustomSceneManager.Instance.LoadScene("GameScene", newGameData);
     }
-
-    public void PauseGame()
+    
+    public void LoadSaveFile()
     {
-        Debug.Log("Pause triggered2");
-        EventManager.Instance.TriggerEvent("ShowPauseUI");
-        GameStateManager.Instance.SetGameState(GameState.Paused);
+        string savePath = $"{Application.persistentDataPath}/gameState.json";
+        
+        if (System.IO.File.Exists(savePath))
+        {
+            GameData loadedSave = SaveManager.LoadGame();
+            Debug.Log("Loading GameScene with saved game data.");
+            CustomSceneManager.Instance.LoadScene("GameScene", loadedSave, false);
+        }
+        else
+        {
+            Debug.LogWarning("No save file, youre fucked.");
+        }
     }
-
-    public void UnpauseGame()
+    
+    private void  HandlePlayerRevive()
     {
-        EventManager.Instance.TriggerEvent("HidePauseUI");
         GameStateManager.Instance.SetGameState(GameState.Playing);
-    }
-
-    public void HidePauseMenu()
-    {
-        EventManager.Instance.TriggerEvent("HidePauseUI");
-    }
-
-    public void HideGameOverMenu()
-    {
+        EventManager.Instance.TriggerEvent("RevivePlayer");
+        EventManager.Instance.TriggerEvent("EnablePlayerAbilities");
+        EventManager.Instance.TriggerEvent("EnablePlayerWeapons");
         EventManager.Instance.TriggerEvent("HideGameOverUI");
     }
-
-    public void HideVictoryMenu()
-    {
-        EventManager.Instance.TriggerEvent("Victory");
-    }
-
-    public void HandleStageEnd()
-    {
-        EventManager.Instance.TriggerEvent("ResetStageUI");
-        EventManager.Instance.TriggerEvent("SpawnPortal", "Shop");
-    }
-
-    public void ExitGame()
-    {
-        Application.Quit();
-        UnityEditor.EditorApplication.isPlaying = false;
-    }
-
+    
     private void HandlePlayerDeath()
     {
         GameStateManager.Instance.SetGameState(GameState.GameOver);
-        EventManager.Instance.TriggerEvent("HandlePlayerDeath");
+        EventManager.Instance.TriggerEvent("KillPlayer");
         EventManager.Instance.TriggerEvent("DisablePlayerAbilities");
+        EventManager.Instance.TriggerEvent("DisablePlayerWeapons");
         EventManager.Instance.TriggerEvent("ShowGameOverUI");
-    }
-
-    private void HandleVictory(string cutsceneName)
-    {
-        Debug.Log("Victory!");
-        if (cutsceneName == "BossDefeatCutscene")
-        {
-            Debug.Log($"triggering {cutsceneName} cutscene");
-
-            EventManager.Instance.TriggerEvent("SpawnPortal", "Victory");
-        }
-
     }
 
     private void HandleLevelUp(float currentLevel)
     {
         GameStateManager.Instance.SetGameState(GameState.LevelUp);
         EventManager.Instance.TriggerEvent("UpdateLevelUI", currentLevel);
-        if (currentLevel == 2 || currentLevel == 5)
+        if (currentLevel == 5 || currentLevel == 10)
         {
             EventManager.Instance.TriggerEvent("ShowAbilityChoices", 3);
         }
@@ -201,28 +168,22 @@ public class GameManager : BaseManager
     private void HideLevelUp()
     {
         GameStateManager.Instance.SetGameState(GameState.Playing);
-        EventManager.Instance.TriggerEvent("HideLevelUpUI");
+        UIManager.Instance.HideLevelUpUI();
     }
 
-    private void HandleMapTransition(string destination)
+    public void ClaimVictory()
     {
-        if (destination == "Shop")
-        {
-            AudioManager.Instance.PlayBackgroundMusic("Music_Shopping", 1.0f);
-        }
-
-        if (destination == "Game")
-        {
-            AudioManager.Instance.PlayBackgroundMusic("Music_Gameplay", 1.0f);
-        }
-
-        if (destination == "Victory")
-        {
-            Debug.Log("Play victory music.");
-            AudioManager.Instance.PlayBackgroundMusic("Music_Victory", 1.0f);
-        }
+        Debug.Log("Victory claimed.");
+        Vector3 portalSpawnLocation = SpawnManager.Instance.GetValidSpawnPosition();
+        EventManager.Instance.TriggerEvent("SpawnPortal", "Victory", portalSpawnLocation);
+        Debug.LogWarning($"Portal spawned: {portalSpawnLocation}");
     }
-
+    
+    public void ClaimLoss()
+    {
+        Debug.Log("Loss claimed.");
+    }
+    
     public void ResetDependencies()
     {
         dependencies.Clear();

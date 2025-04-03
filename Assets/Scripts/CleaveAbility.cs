@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CleaveAbility : PlayerAbilityBase
+/*public class CleaveAbility : PlayerAbilityBase
 {
     [Header("Cleave Specials")]
     public float baseCleaveSize;
@@ -26,7 +26,7 @@ public class CleaveAbility : PlayerAbilityBase
     {
         Debug.Log("Initializing Cleave Ability...");
 
-        abilityData.playerStats = PlayerStatManager.Instance;
+        abilityData.playerStats = AttributeManager.Instance;
         abilityData.player = GameObject.FindWithTag("Player").transform;
         abilityData.abilityPrefab = Resources.Load<GameObject>("PlayerAbilities/CleaveAbility");
         abilityData.enemyLayer = LayerMask.GetMask("Enemy");
@@ -51,7 +51,7 @@ public class CleaveAbility : PlayerAbilityBase
         currentCooldownRate = abilityData.baseCooldownRate;
         currentRange = abilityData.baseRange;
         currentKnockbackForce = abilityData.baseKnockbackForce;
-        currentCriticalHitDamage = PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage);
+        currentCriticalHitDamage = AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage);
         currentCleaveSize = baseCleaveSize;
         currentSpinAmount = baseSpinAmount;
     }
@@ -83,7 +83,7 @@ public class CleaveAbility : PlayerAbilityBase
         currentDamage = abilityData.playerStats.GetStatValue(StatType.Damage, abilityData.baseDamage);
         currentRange = abilityData.playerStats.GetStatValue(StatType.Range, abilityData.baseRange);
         currentCooldownRate = abilityData.playerStats.GetStatValue(StatType.CooldownRate, abilityData.baseCooldownRate);
-        currentCriticalHitDamage = abilityData.playerStats.GetStatValue(StatType.CriticalHitDamage, PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage));
+        currentCriticalHitDamage = abilityData.playerStats.GetStatValue(StatType.CriticalHitDamage, AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage));
         currentSpinAmount = abilityData.playerStats.GetStatValue(StatType.Whirlwind, baseSpinAmount);
         currentCleaveSize = abilityData.playerStats.GetStatValue(StatType.CleaveSize, baseCleaveSize);
     }
@@ -108,5 +108,5 @@ public class CleaveAbility : PlayerAbilityBase
         Gizmos.color = Color.blue; 
         Gizmos.DrawWireSphere(transform.position, currentRange); 
     }
-}
+}*/
 

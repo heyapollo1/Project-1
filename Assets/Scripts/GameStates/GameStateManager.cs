@@ -19,7 +19,8 @@ public class GameStateManager : BaseManager
     public override int Priority => 20;
 
     public GameState CurrentState { get; private set; }
-
+    private GameState previousState;
+    
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -34,14 +35,10 @@ public class GameStateManager : BaseManager
     public void SetGameState(GameState newState)
     {
         if (CurrentState == newState) return;
-
+        previousState = CurrentState;
         CurrentState = newState;
-
-        if (newState == GameState.Paused)
-        {
-            EventManager.Instance.TriggerEvent("PauseAudio");
-        }
-        else if (newState == GameState.Playing || newState == GameState.MainMenu)
+        
+        if (newState == GameState.Playing || newState == GameState.MainMenu)
         {
             EventManager.Instance.TriggerEvent("ResumeAudio");
         }
@@ -64,6 +61,7 @@ public class GameStateManager : BaseManager
                 break;
 
             case GameState.Paused:
+                EventManager.Instance.TriggerEvent("PauseAudio");
                 Time.timeScale = 0f;
                 break;
 

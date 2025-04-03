@@ -19,7 +19,8 @@ public class SoundRequest
 public class AudioManager : BaseManager
 {
     public static AudioManager Instance;
-
+    public override int Priority => 20;
+    
     [Header("Audio Mixer")]
     public AudioMixer audioMixer;
 
@@ -36,7 +37,7 @@ public class AudioManager : BaseManager
     public string currentMusic;
 
     private Dictionary<string, List<AudioClip>> audioCategories = new Dictionary<string, List<AudioClip>>();
-    private Dictionary<string, int> groupLimits = new Dictionary<string, int> { { "Default", 10 }, { "Gunfire", 10 }, { "Footsteps", 5 } };
+    private Dictionary<string, int> groupLimits = new Dictionary<string, int> { { "Default", 20 }, { "Gunfire", 10 }, { "Footsteps", 5 } };
     private Dictionary<string, int> activeGroupCounts = new Dictionary<string, int>();
 
 
@@ -46,7 +47,7 @@ public class AudioManager : BaseManager
         {
             audioMixer = Resources.Load<AudioMixer>("Prefabs/MainAudioMixer");
         }
-
+        //EventManager.Instance.StartListening("ChangeMusic", ChangeBGMusic);
         InitializeAudio();
     }
 

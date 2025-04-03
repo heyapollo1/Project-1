@@ -77,21 +77,20 @@ public class EnemyAI : MonoBehaviour
         deathState = new DeathState();
         stunnedState = new StunnedState();
         spawnState = new SpawnState();
-        evadingState = new EvadingState();
-
-        EventManager.Instance.StartListening("GameStarted", SceneInitialize);
+        evadingState = new EvadingState(); 
+        //EventManager.Instance.StartListening("GameStarted", SceneInitialize);
     }
 
     private void OnDisable()
     {
-        EventManager.Instance.StopListening("GameStarted", SceneInitialize);
+        //EventManager.Instance.StopListening("GameStarted", SceneInitialize);
     }
 
     private void SceneInitialize()
     {
         if (!isInitialized)
         {
-            Debug.LogWarning($"Buislt in initializing system triggered");
+            Debug.LogWarning($"Built in initializing system triggered");
             ActivateFromPool(transform.position);
         }
     }
@@ -167,7 +166,7 @@ public class EnemyAI : MonoBehaviour
         isDisabled = true;
         InterruptCurrentAbility();
         if (abilityManager != null) abilityManager.enabled = false;
-        EnemyManager.Instance.UnregisterEnemy(gameObject);
+        //EnemyManager.Instance.UnregisterEnemy(gameObject);
         TransitionToState(idleState);
     }
 
@@ -210,7 +209,8 @@ public class EnemyAI : MonoBehaviour
             InitializeMovement();
             InitializeDrops();
         }
-
+        
+        healthManager.ResetDeathState();
         EnemyManager.Instance.RegisterEnemy(gameObject);
         transform.position = spawnPosition;
         gameObject.SetActive(true);
@@ -297,7 +297,7 @@ public class EnemyAI : MonoBehaviour
             currentAbility = null;
         }
     }
-
+    
     public void FaceDirection(Vector2 direction)
     {
         direction.Normalize();

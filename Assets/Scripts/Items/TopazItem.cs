@@ -2,46 +2,86 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TopazItem : ItemData, ICombatEffect
+public class TopazItem : BaseItem
 {
+    private static readonly List<TagType> ClassTags = new()
+    {
+        TagType.Junk
+    };
+    
+    private static readonly Dictionary<Rarity, List<StatModifier>> rarityModifiers = new()
+    {
+        { Rarity.Epic, new List<StatModifier> { new (StatType.BurnChance, 10f) } },
+        { Rarity.Legendary, new List<StatModifier> { new (StatType.BurnChance, 20f) } }
+    };
+    
     private float stunChance = 20f;
-    private float stunDuration = 2f;
-
-    public TopazItem(Sprite topazIcon)
+    
+    public TopazItem(Sprite topazIcon, Rarity rarity) : base(
+        "Topaz", topazIcon, 50, ItemType.Simple, rarity, 
+        rarityModifiers[rarity])
     {
-        itemName = "Topaz";
-        description = "Attacks have a 20% chance to Stun enemies.";
-        icon = topazIcon;
-        price = 50;
-        itemType = ItemType.Combat;
+        UpdateDescription();
     }
-
-    public override void Apply(PlayerStatManager playerStats)
+    
+    public override void Upgrade()
     {
-        // No need to apply immediate stat modifiers, handled via OnHit
-    }
-
-    public override void Remove(PlayerStatManager playerStats)
-    {
-        // Clean up if needed
-    }
-
-    public void OnHit(GameObject target, PlayerStatManager playerStats)
-    {
-        EnemyHealthManager enemyHealth = target.GetComponent<EnemyHealthManager>();
-
-        if (enemyHealth != null)
+        if (currentRarity < Rarity.Legendary)
         {
-            float roll = Random.Range(0f, 100f);
-            if (roll <= stunChance)
+            currentRarity++;
+            value = Mathf.RoundToInt(value * GetRarityMultiplier());
+            if (rarityModifiers.ContainsKey(currentRarity))
             {
-                StatusEffectManager.Instance.ApplyStatusEffect(target, () => new StunEffect(stunDuration, enemyHealth, PlayerCombat.Instance));
-                Debug.Log($"{target.name} has been stunned by Topaz!");
+                modifiers = rarityModifiers[currentRarity];
             }
+            else
+            {
+                Debug.LogError($"No modifiers found for upgraded Topaz rarity {currentRarity}.");
+            }
+            UpdateDescription();
         }
     }
+    
+    public bool TryGetNextUpgradeModifier(out StatModifier nextModifier)
+    {
+        if (currentRarity < Rarity.Legendary)
+        {
+            Rarity nextRarity = currentRarity + 1;
+            if (rarityModifiers.TryGetValue(nextRarity, out var nextMods))
+            {
+                nextModifier = nextMods[0];
+                return true;
+            }
+        }
+        nextModifier = null;
+        return false;
+    }
+    
+    public override string UpdateDescription(bool showUpgrade = false)
+    {
+        float currentBonus = modifiers[0].flatBonus;
+        string upgradePart = "";
 
-    public void OnHealthChanged(float currentHealth, float maxHealth, PlayerStatManager playerStats) { }
+        if (showUpgrade && TryGetNextUpgradeModifier(out var next))
+        {
+            upgradePart = $" >> <color=#00FF00>{next.flatBonus}%</color>";
+        }
 
-    public void OnEnemyKilled(GameObject enemy, PlayerStatManager playerStats) { }
+        return description = $"{(currentBonus):0}%{upgradePart} to inflict Stun.";
+    }
+    
+    public override void Apply(AttributeManager playerStats)
+    {
+        base.Apply(playerStats);
+
+        EventManager.Instance.TriggerEvent("FXPoolUpdate", "BurningFX", 10);
+        Debug.Log("BurningFX added to FX pool.");
+    }
+    
+    public override void Remove(AttributeManager playerStats)
+    {
+        base.Remove(playerStats);
+        FXManager.Instance.RemovePool("BurningFX");
+        Debug.Log("BurningFX removed from FX pool.");
+    }
 }

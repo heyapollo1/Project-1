@@ -138,7 +138,7 @@ public class CleaveEffect : MonoBehaviour
                 float finalDamage = isCritical ? damage * critDamage : damage;
 
                 Vector2 knockbackDirection = (collider.transform.position - transform.position).normalized;
-                enemyHealth.TakeDamage(finalDamage, knockbackDirection, knockbackForce, isCritical);
+                enemyHealth.TakeDamage(finalDamage, knockbackDirection, knockbackForce, DamageSource.Player, isCritical);
             }
         }
     }

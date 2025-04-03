@@ -31,7 +31,7 @@ public class AbilityUI : MonoBehaviour
         {
             for (int i = 0; i < 3; i++)
             {
-                Debug.LogWarning("creating ability slots");
+                //Debug.LogWarning("creating ability slots");
                 GameObject slot = Instantiate(abilityUISlotPrefab, abilityUIContainer);
                 abilitySlots.Add(slot);
                 slot.SetActive(false); // Initially hide all slots

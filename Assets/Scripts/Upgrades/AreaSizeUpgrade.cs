@@ -14,7 +14,7 @@ public class AreaSizeUpgrade : UpgradeData
         icon = areaSizeIcon;
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Apply(AttributeManager playerStats)
     {
         // Create a new modifier for attack speed
         StatModifier areaSizeModifier = new StatModifier(
@@ -27,7 +27,7 @@ public class AreaSizeUpgrade : UpgradeData
         Debug.Log($"AreaSize upgraded. Current AreaSize: {playerStats.GetStatValue(StatType.AreaSize, 1f)}");
     }
 
-    public override void ScaleUpgrade(PlayerStatManager playerStats)
+    public override void ScaleUpgrade(AttributeManager playerStats)
     {
         upgradeLevel++;
         Apply(playerStats);  // Re-apply the damage boost at the new level

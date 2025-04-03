@@ -2,43 +2,63 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ToothItem : ItemData, ICombatEffect
+public class ToothItem : BaseItem
 {
-    float toothDamageIncrease = 50f;
-
-    public ToothItem(Sprite toothIcon)
+    private static readonly List<TagType> ClassTags = new()
     {
-        itemName = "Tooth";
-        description = "Increase damage against Bleeding enemies by 50%.";
-        icon = toothIcon;
-        price = 50;
-        itemType = ItemType.Combat;
+        TagType.Junk
+    };
+    
+    private static readonly Dictionary<Rarity, float> GetDamageBonus = new()
+    {
+        { Rarity.Epic, 0.5f },
+        { Rarity.Legendary, 1.0f }
+    };
+    
+    private float damageBonus;
+
+    public ToothItem(Sprite toothIcon, Rarity rarity) 
+        : base("Tooth", toothIcon, 50, ItemType.Combat, rarity, null, ClassTags,
+            new ToothEffect(GetDamageBonus[rarity]))
+    {
+        damageBonus = GetDamageBonus[rarity];
+        UpdateDescription();
     }
-
-    public override void Apply(PlayerStatManager playerStats)
+    
+    public override void Upgrade()
     {
-    }
-
-    public override void Remove(PlayerStatManager playerStats)
-    {
-    }
-
-    public void OnHealthChanged(float currentHealth, float maxHealth, PlayerStatManager playerStats) { }
-    public void OnEnemyKilled(GameObject enemy, PlayerStatManager playerStats) { }
-    public void OnHit(GameObject target, PlayerStatManager playerStats) { }
-
-    public float ModifyDamage(float damage, GameObject target)
-    {
-        EnemyHealthManager enemyHealth = target.GetComponent<EnemyHealthManager>();
-        if (enemyHealth != null && enemyHealth.HasStatusEffect<BleedingEffect>()) // Dynamically check Bleeding
+        if (currentRarity < Rarity.Legendary)
         {
-            float modifiedDamage = damage * (1 + (toothDamageIncrease / 100f));
-
-            // Round up the modified damage
-            modifiedDamage = Mathf.Ceil(modifiedDamage);
-
-            return modifiedDamage;
+            currentRarity++;
+            value = Mathf.RoundToInt(value * GetRarityMultiplier()); 
+            damageBonus = GetDamageBonus[currentRarity];
+            combatEffect = new ToothEffect(damageBonus); 
+            UpdateDescription(); 
         }
-        return Mathf.Ceil(damage);
+    }
+    
+    public bool TryGetNextUpgradeModifier(out float nextDamageBonus)
+    {
+        if (currentRarity < Rarity.Legendary)
+        {
+            Rarity nextRarity = currentRarity + 1;
+            if (GetDamageBonus.TryGetValue(nextRarity, out nextDamageBonus))
+                return true;
+        }
+
+        nextDamageBonus = 0f;
+        return false;
+    }
+    
+    public override string UpdateDescription(bool showUpgrade = false)
+    {
+        string upgradePart = "";
+
+        if (showUpgrade && TryGetNextUpgradeModifier(out float nextChance))
+        {
+            upgradePart = $" >> <color=#00FF00>{nextChance * 100}%</color>";
+        }
+        
+        return description = $"Increase damage against Bleeding enemies by {(damageBonus * 100):0}%{upgradePart}.";
     }
 }

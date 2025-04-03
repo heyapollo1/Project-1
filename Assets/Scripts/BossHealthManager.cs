@@ -11,7 +11,9 @@ public class BossHealthManager : EnemyHealthManager, IDamageable
     public BossUIManager bossUIManager;
     public float phaseThreshold = 0.5f;
     private bool hasPhaseChanged = false;
-
+    private float staggerHealth;
+    private bool isDead = false;
+    
     [Header("Cutscene Settings")]
     public Cutscene bossDefeatCutscene;
 
@@ -19,12 +21,6 @@ public class BossHealthManager : EnemyHealthManager, IDamageable
     {
         base.Awake();
         bossUIManager = FindObjectOfType<BossUIManager>();
-    }
-
-    protected override void Start()
-    {
-        base.Start();
-
         if (bossUIManager != null)
         {
             bossUIManager.Initialize(gameObject.name, maxHealth);
@@ -32,9 +28,9 @@ public class BossHealthManager : EnemyHealthManager, IDamageable
         }
     }
 
-    public override void TakeDamage(float damage, Vector2 knockbackDirection, float knockbackForce, bool isCriticalHit = false, bool isFromStatusEffect = false)
+    public override void TakeDamage(float damage, Vector2 knockbackDirection, float knockbackForce, DamageSource sourceType, bool isCriticalHit = false)
     {
-        base.TakeDamage(damage, knockbackDirection, knockbackForce, isCriticalHit, isFromStatusEffect);
+        base.TakeDamage(damage, knockbackDirection, knockbackForce, sourceType, isCriticalHit);
 
         if (bossUIManager != null)
         {
@@ -51,7 +47,20 @@ public class BossHealthManager : EnemyHealthManager, IDamageable
             Die();
         }
     }
-
+    
+    protected override void TriggerVisualFeedback()
+    {
+        base.TriggerVisualFeedback();
+        Debug.Log("trigger boss vfx");
+    }
+    
+    protected override bool ShouldTriggerStagger()
+    {
+        if (isDead) return false;
+        float staggerThreshold = maxHealth * staggerThresholdPercentage;
+        return staggerHealth >= staggerThreshold && currentHealth > 0;
+    }
+    
     private void TriggerPhaseChange()
     {
         hasPhaseChanged = true;
@@ -71,7 +80,7 @@ public class BossHealthManager : EnemyHealthManager, IDamageable
         enemy.deathType = DeathType.Boss;
         AudioManager.Instance.PlayUISound("Boss_Death");
         enemy.TransitionToState(enemy.deathState);
-        CutsceneManager.Instance.StartCutscene(bossDefeatCutscene, transform);
+        CutsceneManager.Instance.StartCutscene("BossDefeatCutscene", transform);
         bossUIManager.Hide();
     }
 }

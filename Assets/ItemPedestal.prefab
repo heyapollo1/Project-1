@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 9220273775257223680}
   m_Layer: 0
   m_Name: ItemSpawnPoint
-  m_TagString: Untagged
+  m_TagString: Pedestal
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -77,7 +77,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8b5161aa32514d90a28ebf1b42c98aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemSpawnPoint: {fileID: 9220273775257223680}
+  itemPrefab: {fileID: 7522962785941789512, guid: 053bfb5931a7949608f93f244f4c1e1b, type: 3}
+  weaponPrefab: {fileID: 7522962785941789512, guid: f846035d3b06c4751b4764561ddae548, type: 3}
+  displaySpawnPosition: {fileID: 9220273775257223680}
 --- !u!212 &7724433717417502181
 SpriteRenderer:
   m_ObjectHideFlags: 0

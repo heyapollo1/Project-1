@@ -9,73 +9,40 @@ public abstract class StatusEffect
     protected bool isEternal;
     protected bool isFirstApplication = true;
     protected Coroutine effectCoroutine;
-    protected MonoBehaviour affectedTarget; // The object that has Mono to run coroutine (e.g., PlayerCombat, Enemy), bc public abstract class cant.
+    protected ILivingEntity target;
+    protected MonoBehaviour affectedTarget; // The object that has Mono to run coroutine (e.g., PlayerCombat, Enemy), bc public abstract class cant. No mono.
 
-    public StatusEffect(float duration, float damage, MonoBehaviour owner, bool isEternal)
+    public StatusEffect(float duration, float damage, ILivingEntity target, MonoBehaviour coroutineRunner, bool isEternal)
     {
         Duration = duration;
         Damage = damage;
-        affectedTarget = owner;
+        affectedTarget = coroutineRunner;
+        this.target = target;
         this.isEternal = isEternal;
     }
 
-    public virtual void Apply()
+    public void ApplyEffect()
     {
         if (!isActive)
         {
             isActive = true;
             effectCoroutine = affectedTarget.StartCoroutine(EffectCoroutine());
         }
-        else
-        {
-            Debug.LogWarning("Attempted to apply an already active status effect.");
-            return;
-        }
+        Debug.LogWarning("Attempted to apply an already active status effect.");
     }
 
-    public virtual void Remove(GameObject target, bool isPlayer)
+    public virtual void RemoveEffect()
     {
-        if (!isActive || target == null)
+        if (!isActive || effectCoroutine == null)
         {
-            Debug.LogWarning("Attempted to remove an inactive effect or target is null.");
+            Debug.LogWarning("Attempted to remove an inactive effect.");
             return;
         }
-
-        if (effectCoroutine != null)
-        {
-            Debug.Log($"{affectedTarget.name} is stopping coroutine.");
-            affectedTarget.StopCoroutine(effectCoroutine);
-            effectCoroutine = null;
-        }
-
+        affectedTarget.StopCoroutine(effectCoroutine);
+        isFirstApplication = true;
+        effectCoroutine = null;
         isActive = false;
-
-        if (!isPlayer)
-        {
-            EnemyHealthManager enemyHealth = target.GetComponent<EnemyHealthManager>();
-            if (enemyHealth != null)
-            {
-                Debug.Log($"{enemyHealth.name} is removing effect.");
-                enemyHealth.RemoveStatusEffect(this);
-            }
-            else
-            {
-                Debug.LogWarning("EnemyHealthManager component missing on target or target is null.");
-            }
-        }
-        else
-        {
-            PlayerHealthManager playerHealth = target.GetComponent<PlayerHealthManager>();
-            if (playerHealth != null)
-            {
-                Debug.Log($"{playerHealth.name} is removing effect.");
-                playerHealth.RemoveStatusEffect(this);
-            }
-            else
-            {
-                Debug.LogWarning("PlayerHealthManager component missing on target or target is null.");
-            }
-        }
+        target.RemoveStatusEffect(this);
     }
 
     protected abstract IEnumerator EffectCoroutine();

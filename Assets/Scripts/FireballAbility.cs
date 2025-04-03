@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FireballAbility : PlayerAbilityBase
+/*public class FireballAbility : PlayerAbilityBase
 {
     [Header("Fireball Specials")]
     public GameObject fireballPrefab;
@@ -24,7 +24,7 @@ public class FireballAbility : PlayerAbilityBase
     {
         Debug.Log("Initializing Fireball Ability...");
 
-        abilityData.playerStats = PlayerStatManager.Instance;
+        abilityData.playerStats = AttributeManager.Instance;
         abilityData.player = GameObject.FindWithTag("Player").transform;
         abilityData.abilityPrefab = Resources.Load<GameObject>("PlayerAbilities/FireballAbility");
         abilityData.enemyLayer = LayerMask.GetMask("Enemy");
@@ -48,7 +48,7 @@ public class FireballAbility : PlayerAbilityBase
         currentCooldownRate = abilityData.baseCooldownRate;
         //currentRange = abilityData.baseRange;
         currentKnockbackForce = abilityData.baseKnockbackForce;
-        currentCriticalHitDamage = PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage);
+        currentCriticalHitDamage = AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage);
         currentFireballSize = baseFireballSize;
         currentProjectileSpeed = baseProjectileSpeed;
     }
@@ -64,7 +64,7 @@ public class FireballAbility : PlayerAbilityBase
 
         Vector2 aimDirection = playerController.GetAimDirection();
         Debug.Log("Fireball Size: " + currentFireballSize);
-        GameObject fireball = objectPool.GetFromPool("Fireball", playerController.firePointTransform.position, Quaternion.identity);
+        GameObject fireball = objectPool.GetFromPool("Fireball", playerController.castLocation.position, Quaternion.identity);
         fireball.transform.localScale = new Vector2(currentFireballSize, currentFireballSize);
         Fireball fireballScript = fireball.GetComponent<Fireball>();
         fireballScript.Initialize(aimDirection);
@@ -86,7 +86,7 @@ public class FireballAbility : PlayerAbilityBase
         currentDamage = abilityData.playerStats.GetStatValue(StatType.Damage, abilityData.baseDamage);
         //currentRange = abilityData.playerStats.GetStatValue(StatType.Range, abilityData.baseRange);
         currentCooldownRate = abilityData.playerStats.GetStatValue(StatType.CooldownRate, abilityData.baseCooldownRate);
-        currentCriticalHitDamage = PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage);
+        currentCriticalHitDamage = AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage);
         Debug.Log("Current CDR: " + currentCooldownRate + ". My base CDR:" + abilityData.baseCooldownRate);
     }
 
@@ -98,4 +98,4 @@ public class FireballAbility : PlayerAbilityBase
     {
         StartCooldown(currentCooldownRate);
     }
-}
+}*/

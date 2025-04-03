@@ -1,23 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using System.Linq;
+using Random = UnityEngine.Random;
 
 public class ItemDatabase : BaseManager
 {
     public static ItemDatabase Instance { get; private set; }
     public override int Priority => 30;
 
-    public List<ItemData> availableItems = new List<ItemData>();
-    private HashSet<ItemData> activeItems = new HashSet<ItemData>();
-
+    public List<BaseItem> availableItems = new List<BaseItem>();
+    public HashSet<string> activeItems = new HashSet<string>();
+    
     protected override void OnInitialize()
     {
-        EventManager.Instance.StartListening("PlayerReady", LoadItems);
-    }
-
-    private void OnDestroy()
-    {
-        EventManager.Instance.StopListening("PlayerReady", LoadItems);
+        RegisterItems();
     }
 
     private void Awake()
@@ -25,122 +23,175 @@ public class ItemDatabase : BaseManager
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
-
-    private void LoadItems()
+    
+    private void OnDestroy()
     {
-        Sprite appleIcon = Resources.Load<Sprite>("Items/AppleIcon");
-        Sprite rubyIcon = Resources.Load<Sprite>("Items/RubyIcon");
-        Sprite witchPointIcon = Resources.Load<Sprite>("Items/WitchPointIcon");
-        Sprite brassLinkIcon = Resources.Load<Sprite>("Items/brassLinkIcon");
-        Sprite ghostWindIcon = Resources.Load<Sprite>("Items/GhostWindIcon");
-        Sprite potionIcon = Resources.Load<Sprite>("Items/PotionIcon");
-        Sprite cloverIcon = Resources.Load<Sprite>("Items/CloverIcon");
-        Sprite madDogIcon = Resources.Load<Sprite>("Items/MadDogIcon");
-        Sprite toothIcon = Resources.Load<Sprite>("Items/ToothIcon");
-        Sprite swordIcon = Resources.Load<Sprite>("Items/SwordIcon");
-        Sprite fullMetalJacketIcon = Resources.Load<Sprite>("Items/FullMetalJacketIcon");
-        Sprite brawlersIcon = Resources.Load<Sprite>("Items/BrawlersIcon");
-        Sprite topazIcon = Resources.Load<Sprite>("Items/TopazIcon");
-        Sprite candleIcon = Resources.Load<Sprite>("Items/CandleIcon");
-
-        availableItems.Add(new AppleItem(appleIcon));
-        availableItems.Add(new RubyItem(rubyIcon));
-        availableItems.Add(new WitchPointItem(witchPointIcon));
-        availableItems.Add(new BrassLinkItem(brassLinkIcon));
-        availableItems.Add(new GhostWindItem(ghostWindIcon));
-        availableItems.Add(new PotionItem(potionIcon));
-        availableItems.Add(new CloverItem(cloverIcon));
-        availableItems.Add(new MadDogItem(madDogIcon));
-        availableItems.Add(new ToothItem(toothIcon));
-        availableItems.Add(new SwordItem(swordIcon));
-        availableItems.Add(new FullMetalJacketItem(fullMetalJacketIcon));
-        availableItems.Add(new BrawlersItem(brawlersIcon));
-        availableItems.Add(new TopazItem(topazIcon));
-        availableItems.Add(new CandleItem(candleIcon));
+        ResetItems();
     }
 
-    public List<ItemData> ShowRandomItems(int count)
+    private void RegisterItems()
     {
-        List<ItemData> randomItems = new List<ItemData>();
-        List<ItemData> availableItemsCopy = new List<ItemData>(availableItems);
+        ItemFactory.RegisterItem("Apple", (icon, rarity) => new AppleItem(icon, rarity), Rarity.Common);
+        ItemFactory.RegisterItem("Witch Point", (icon, rarity) => new WitchPointItem(icon, rarity), Rarity.Epic);
+        ItemFactory.RegisterItem("Ghost Wind", (icon, rarity) => new GhostWindItem(icon, rarity), Rarity.Common);
+        ItemFactory.RegisterItem("Axe", (icon, rarity) => new AxeItem(icon, rarity), Rarity.Common);
+        ItemFactory.RegisterItem("Ruby", (icon, rarity) => new RubyItem(icon, rarity), Rarity.Common);
+        ItemFactory.RegisterItem("Clover", (icon, rarity) => new CloverItem(icon, rarity), Rarity.Common);
+        ItemFactory.RegisterItem("Mad Dog", (icon, rarity) => new MadDogItem(icon, rarity), Rarity.Rare);
+        ItemFactory.RegisterItem("Tooth", (icon, rarity) => new ToothItem(icon, rarity), Rarity.Epic);
+        ItemFactory.RegisterItem("Sword", (icon, rarity) => new SwordItem(icon, rarity), Rarity.Common);
+        ItemFactory.RegisterItem("Full Metal Jacket", (icon, rarity) => new FullMetalJacketItem(icon, rarity), Rarity.Common);
+        ItemFactory.RegisterItem("Topaz", (icon, rarity) => new TopazItem(icon, rarity), Rarity.Epic);
+        ItemFactory.RegisterItem("Candle", (icon, rarity) => new CandleItem(icon, rarity), Rarity.Rare);
+    }
 
-        availableItemsCopy.RemoveAll(item => activeItems.Contains(item) || InventoryManager.Instance.HasItem(item));
+    public BaseItem GetRandomItem(StageBracket bracket)
+    {
+        Rarity rolledRarity = RollRarity(bracket);
+        Rarity itemDefaultRarity;
+        List<string> allItemNames = ItemFactory.GetAllRegisteredItems();
 
-        for (int i = 0; i < count; i++)
+        string randomItemName;
+        BaseItem selectedItem = null;
+        int attempts = 0;
+        const int maxAttempts = 50;
+        
+        do
         {
-            if (availableItemsCopy.Count == 0) break;
-            int randomIndex = Random.Range(0, availableItemsCopy.Count);
-            ItemData selectedItem = availableItemsCopy[randomIndex];
-            randomItems.Add(selectedItem);
-            availableItemsCopy.RemoveAt(randomIndex);
-
-            activeItems.Add(selectedItem);
-        }
-
-        return randomItems;
-    }
-
-    public ItemData GetRandomItem()
-    {
-        // Create list of eligible items
-        List<ItemData> eligibleItems = new List<ItemData>(availableItems);
-
-        eligibleItems.RemoveAll(item => activeItems.Contains(item) || InventoryManager.Instance.HasItem(item));
-
-        if (eligibleItems.Count == 0)
-        {
-            return null;
-        }
-
-        int randomIndex = Random.Range(0, eligibleItems.Count);
-        ItemData selectedItem = eligibleItems[randomIndex];
-
-        // Mark the item as active
-        activeItems.Add(selectedItem);
-
-        return selectedItem;
-    }
-
-    public void RemoveActiveItem(ItemData item)
-    {
-        activeItems.Remove(item);
-    }
-
-    public void AddNewItem(ItemData newItem)
-    {
-        availableItems.Add(newItem);
-        Debug.Log($"Added item: {newItem.itemName}");
-    }
-
-    public ItemData GetItem(string itemName)
-    {
-        List<ItemData> eligibleItems = new List<ItemData>(availableItems);
-
-        eligibleItems.RemoveAll(item => activeItems.Contains(item) || InventoryManager.Instance.HasItem(item));
-
-        if (eligibleItems.Count == 0)
-        {
-            return null;
-        }
-
-        foreach (ItemData item in eligibleItems)
-        {
-            if (item.itemName == itemName)
+            if (attempts >= maxAttempts)
             {
-                return item;
+                Debug.LogError("Too many attempts, no viable items found.");
+                return null;
+            }
+
+            attempts++;
+            randomItemName = allItemNames[Random.Range(0, allItemNames.Count)];
+            itemDefaultRarity = ItemFactory.GetDefaultRarity(randomItemName);
+            Debug.Log($"Attempt {attempts}: Trying item {randomItemName} (Default Rarity: {itemDefaultRarity})");
+
+            if (!activeItems.Contains(randomItemName) && IsItemAllowed(randomItemName, itemDefaultRarity, rolledRarity))
+            {
+                break; // Found a valid item, exit loop
             }
         }
-        return null;
+        while (true);
+        Sprite itemIcon = LoadItemIcon(randomItemName);
+        if (InventoryManager.Instance.HasItem(randomItemName))
+        {
+            Rarity? playerRarity = InventoryManager.Instance.GetOwnedItemRarity(randomItemName);
+            rolledRarity = playerRarity.Value;
+            selectedItem = ItemFactory.CreateItem(randomItemName, itemIcon, rolledRarity);
+        }
+        else
+        {
+            Debug.LogWarning($"{randomItemName}, rarity: ({itemDefaultRarity}) is not owned by player");
+            selectedItem = ItemFactory.CreateItem(randomItemName, itemIcon, rolledRarity);
+        }
+        
+        Debug.LogWarning($"{selectedItem.itemName} gotten from the database");
+        return selectedItem;
+    }
+    
+    public Sprite LoadItemIcon(string itemName)
+    {
+        return Resources.Load<Sprite>($"Items/{itemName.Replace(" ", "")}Icon");
+    }
+    
+    private Rarity RollRarity(StageBracket bracket)
+    {
+        Debug.LogWarning("RollingRarity");
+        Dictionary<Rarity, float> chances = RarityChances.GetRarityBracketChances(bracket);
+        float randomValue = Random.value;
+        float cumulativeProbability = 0f;
+
+        foreach (var rarityChance in chances)
+        {
+            cumulativeProbability += rarityChance.Value;
+            if (randomValue <= cumulativeProbability)
+            {
+                return rarityChance.Key;
+            }
+        }
+        Debug.LogWarning("Rarity roll failed, defaulting to Bronze.");
+        return Rarity.Common; // Fallback rarity
+    }
+    
+    private bool IsItemAllowed(string itemName, Rarity itemDefaultRarity, Rarity rolledRarity)
+    {
+        if (rolledRarity < itemDefaultRarity)
+        {
+            Debug.LogWarning($"{itemName}: Default Rarity ({itemDefaultRarity}) is higher than rolled rarity ({rolledRarity}).");
+            return false;
+        }
+        Debug.LogWarning($"{itemName} found, accessing..");
+        return true;
+    }
+    
+    public void RegisterActiveItem(string itemName)
+    {
+        if (!activeItems.Contains(itemName))
+        {
+            activeItems.Add(itemName);
+        }
+    }
+    
+    public void UnregisterActiveItem(string itemName)
+    {
+        if (activeItems.Count <= 0) return;
+        
+        List<string> itemsToRemove = new List<string>();
+
+        foreach (string item in activeItems)
+        {
+            if (item == itemName)
+            {
+                itemsToRemove.Add(item);
+            }
+        }
+        
+        foreach (string item in itemsToRemove)
+        {
+            activeItems.Remove(item);
+        }
     }
 
+    public List<string> GetActiveItemNames() //save state
+    {
+        List<string>itemsInWorld = new List<string>();
+        
+        foreach (var item in activeItems)
+        {
+            itemsInWorld.Add(item);
+        }
+        activeItems.Clear();
+        availableItems.Clear();
+        return itemsInWorld;
+    }
+    
+    public void LoadActiveItemState(WorldState state)
+    {
+        //LoadItems();
+        if (state != null)
+        {
+            Debug.Log("Loading saved item states...");
+            foreach (var itemName in state.activeItemNames)
+            {
+                activeItems.Add(itemName);
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No active item data found. ");
+        }
+    }
+    
     public void ResetItems()
     {
+        activeItems.Clear();
         availableItems.Clear();
-        LoadItems();
+        //ItemFactory.ClearFactory(); 
+        Debug.LogWarning($"Itemdatabase reset");
     }
 
-    public bool AreThereItems()
-    {
-        return activeItems != null && activeItems.Count > 0;
-    }
 }
+

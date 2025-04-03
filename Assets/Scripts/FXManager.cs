@@ -7,16 +7,16 @@ public class FXManager : BaseManager
 {
     public static FXManager Instance;
     public override int Priority => 30;
+    private Dictionary<string, Queue<GameObject>> fxPools = new Dictionary<string, Queue<GameObject>>();
 
-    //[SerializeField] private List<FXData> fxEntries;
-    private Dictionary<string, Queue<GameObject>> fxPools;
+    //private Dictionary<string, Queue<GameObject>> fxPools;
 
     protected override void OnInitialize()
     {
         EventManager.Instance.StartListening("SceneLoaded", OnSceneLoaded);
         EventManager.Instance.StartListening("SceneUnloaded", OnSceneUnloaded);
         EventManager.Instance.StartListening("FXPoolUpdate", OnFXPoolUpdate);
-        EventManager.Instance.StartListening("TravelDeparture", HandleTransition);
+        EventManager.Instance.StartListening("PortalCleanup", HandlePortalTransition);
     }
 
     private void OnDestroy()
@@ -24,13 +24,7 @@ public class FXManager : BaseManager
         EventManager.Instance.StopListening("SceneLoaded", OnSceneLoaded);
         EventManager.Instance.StopListening("SceneUnloaded", OnSceneUnloaded);
         EventManager.Instance.StopListening("FXPoolUpdate", OnFXPoolUpdate);
-        EventManager.Instance.StopListening("TravelDeparture", HandleTransition);
-    }
-
-    private void Awake()
-    {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        EventManager.Instance.StopListening("PortalCleanup", HandlePortalTransition);
     }
 
     private void OnSceneLoaded(string sceneName)
@@ -40,24 +34,30 @@ public class FXManager : BaseManager
             InitializeBaseFXPools();
         }
     }
-
+    
     private void OnSceneUnloaded(string sceneName)
     {
-        if (sceneName == "GameScene")
+        if (sceneName != "GameScene")
         {
             CleanupPools();
         }
     }
+    
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
 
     private void InitializeBaseFXPools()
     {
-        fxPools = new Dictionary<string, Queue<GameObject>>();
-        string[] baseFX = { "HealingFX", "GoldPickupFX", "BulletImpactFX", "LevelUpFX", "BurningFX", "BleedingFX"};
+        string[] baseFX = { "HealingFX", "GoldPickupFX", "BulletImpactFX", "LevelUpFX"};
         foreach (string fxName in baseFX)
         {
             GameObject fxPrefab = Resources.Load<GameObject>($"FX/{fxName}");
             if (fxPrefab != null)
             {
+                Debug.LogWarning($"Baseline FX {fxName} is in Resources/Prefabs/FX.");
                 CreatePool(fxName, fxPrefab, 5);
             }
             else
@@ -67,29 +67,17 @@ public class FXManager : BaseManager
         }
     }
 
-    public void HandleTransition(string destination)
+    public void HandlePortalTransition()
     {
-        if (destination != "Game") return;
-
-        foreach (var pool in fxPools)
-        {
-            Queue<GameObject> fxPrefabs = pool.Value;
-
-            while (fxPrefabs.Count > 0)
-            {
-                GameObject fxPrefab = fxPrefabs.Dequeue();
-                if (fxPrefab != null)
-                {
-                    Destroy(fxPrefab);
-                }
-            }
-        }
+        if (fxPools.Count == 0) return;
+        //CleanupPools();
     }
 
     private void CleanupPools()
     {
         foreach (var pool in fxPools)
         {
+            string fxName = pool.Key;
             Queue<GameObject> fxPrefabs = pool.Value;
 
             while (fxPrefabs.Count > 0)
@@ -101,13 +89,20 @@ public class FXManager : BaseManager
                 }
             }
         }
-
-        fxPools.Clear();
+        //fxPools.Clear();
+        //InitializeBaseFXPools();
         Debug.Log("FX pools cleaned up.");
     }
 
     public void CreatePool(string fxName, GameObject fxPrefab, int poolSize)
     {
+        Debug.Log($"FX Created new pool for {fxName} with size {poolSize}.");
+        if (fxPools == null)
+        {
+            Debug.LogError("fxPools is NULL! Re-initializing...");
+            fxPools = new Dictionary<string, Queue<GameObject>>();
+        }
+        
         if (fxPools.ContainsKey(fxName))
         {
             Debug.LogWarning($"Pool for {fxName} already exists.");
@@ -137,7 +132,7 @@ public class FXManager : BaseManager
         }
 
         fxPools.Add(fxName, pool);
-        Debug.Log($"Created new pool for {fxName} with size {poolSize}.");
+        Debug.Log($"FX Created new pool for {fxName} with size {poolSize}.");
     }
 
     public void RemovePool(string fxName)
@@ -167,15 +162,16 @@ public class FXManager : BaseManager
         if (HasPool(fxName))
         {
             ExpandPool(fxName, initialPoolSize);
-            Debug.Log($"{fxName} is already in the FX pool.");
+            Debug.Log($"HEY CUNt< {fxName} is already in the FX pool.");
             return;
         }
 
         GameObject fxPrefab = Resources.Load<GameObject>($"FX/{fxName}");
         if (fxPrefab != null)
         {
+            Debug.Log($"HEY CUNT{fxPrefab.name} FX pool created");
             CreatePool(fxName, fxPrefab, initialPoolSize);
-            Debug.Log($"{fxName} FX pool created");
+            Debug.Log($"HEY CUNT{fxName} FX pool created");
         }
         else
         {
@@ -190,21 +186,34 @@ public class FXManager : BaseManager
 
     public GameObject PlayFX(string fxName, Vector3 position)
     {
-        if (!fxPools.TryGetValue(fxName, out Queue<GameObject> pool) || pool.Count == 0)
+        //ExpandPool(fxName, 2);
+        if (!fxPools.ContainsKey(fxName))
         {
-            Debug.LogWarning($"FX pool for {fxName} is empty. Expanding.");
+            Debug.LogWarning($"FX pool for '{fxName}' not found. Creating new pool.");
+            //CreatePool(fxName, position, fxPools.Count);
             ExpandPool(fxName, 2);
         }
-
-        if (pool.Count > 0)
+        
+        if (fxPools.TryGetValue(fxName, out Queue<GameObject> pool) && pool.Count > 0)
         {
             GameObject fxInstance = pool.Dequeue();
-            fxInstance.SetActive(true);
-            fxInstance.transform.position = position;
-            return fxInstance;
-        }
 
-        Debug.LogError($"Failed to retrieve FX from pool: {fxName}");
+            if (fxInstance != null)
+            {
+                fxInstance.SetActive(true);
+                fxInstance.transform.position = position;
+                return fxInstance;
+            }
+            else
+            {
+                ExpandPool(fxName, 2);
+                Debug.LogError($"FX instance from '{fxName}' pool is null!");
+            }
+        }
+        else
+        {
+            Debug.LogError($"Failed to retrieve FX from pool: '{fxName}' even after expansion.");
+        }
         return null;
     }
 

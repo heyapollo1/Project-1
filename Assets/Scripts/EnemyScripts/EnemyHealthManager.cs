@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class EnemyHealthManager : MonoBehaviour, IDamageable
+public class EnemyHealthManager : MonoBehaviour, ILivingEntity
 {
     [Header("General Settings")]
     public float maxHealth;
@@ -17,109 +17,112 @@ public class EnemyHealthManager : MonoBehaviour, IDamageable
     [HideInInspector] public EnemyAI enemy;
 
     private float staggerHealth;
+    private bool isDead = false;
     private XPManager xpManager;
-    private Vector3 offsetPosition;
+    //private Vector3 offsetPosition;
     public List<StatusEffect> activeEffects = new List<StatusEffect>();
 
+    public EntityType GetEntityType() => EntityType.Enemy;
+    public Transform GetEffectAnchor() => transform;
+    public float GetCurrentHealth() => currentHealth;
+    public float GetMaxHealth() => maxHealth;
+    public float GetHealthPercentage() => currentHealth/maxHealth;
+    public void ApplyStatusEffect(StatusEffect effect) => activeEffects.Add(effect);
+    public void RemoveStatusEffect(StatusEffect effect) => activeEffects.Remove(effect);
+    public List<StatusEffect> GetActiveEffects() => activeEffects;
+    
     protected virtual void Awake()
     {
         enemy = GetComponent<EnemyAI>();
         xpManager = FindObjectOfType<XPManager>();
         feedbackManager = GetComponent<VisualFeedbackManager>();
         knockbackManager = GetComponent<KnockbackManager>();
-    }
-
-    protected virtual void Start()
-    {
         maxHealth = enemy.currentHealth;
         currentHealth = enemy.currentHealth;
+        //offsetPosition = transform.position + new Vector3(0.1f, 0.8f, 0);
         Debug.Log("Enemy hp: " + currentHealth + "and max: " + maxHealth);
-        offsetPosition = transform.position + new Vector3(0.1f, 0.8f, 0);
     }
-
-    public virtual void TakeDamage(float damage, Vector2 knockbackDirection, float knockbackForce, bool isCriticalHit = false, bool isFromStatusEffect = false)
+    
+    public virtual void TakeDamage(float damage,  Vector2 knockbackDirection, float knockbackForce, DamageSource sourceType = DamageSource.Player, bool isCriticalHit = false)
     {
-        if (enemy.isDisabled) return;
-
-        float modifiedDamage = PlayerCombat.Instance.ApplyDamageModifiers(damage, gameObject);
-        float onHitDamage = PlayerCombat.Instance.ApplyOnHitModifiers(0f, gameObject);
-        float totalDamage = modifiedDamage + onHitDamage;
-        currentHealth -= totalDamage;
-        staggerHealth += totalDamage;
+        if (isDead) return;
+        //float totalDamage = PlayerCombat.Instance.ApplyDamageModifiers(damage, gameObject);
+        currentHealth -= damage;
         TriggerVisualFeedback();
 
-        if (!isFromStatusEffect)
+        switch (sourceType)
         {
-            PlayerCombat.Instance.HandleOnHit(gameObject);
-            ShowDamageNumber(modifiedDamage, isCriticalHit ? Color.yellow : Color.white, isCriticalHit ? 14f : 12f);
-            if (onHitDamage != 0)
-            {
-                ShowDamageNumber(onHitDamage, Color.yellow, 10f, offsetPosition);
-            }
-
-            if (currentHealth <= 0)
-            {
-                DieWithKnockback(knockbackDirection, knockbackForce + 8);
+            case DamageSource.Player:
+                staggerHealth += damage;
+                //PlayerCombat.Instance.HandleOnHit(gameObject, totalDamage);
+                ShowDamageNumber(damage, isCriticalHit ? Color.yellow : Color.white, isCriticalHit ? 15f : 12f);
+                break;
+            case DamageSource.StatusEffect:
+                staggerHealth += damage;
+                ShowDamageNumber(damage, isCriticalHit ? Color.red : Color.yellow, isCriticalHit ? 15f : 12f);
+                break;
+            case DamageSource.Execution:
+                if (currentHealth > 0) currentHealth = 0;
+                ShowDamageNumber(damage, Color.blue, 16f);
+                DieWithKnockback(knockbackDirection, knockbackForce);
                 return;
-            }
-
-            if (ShouldTriggerStagger())
-            {
-                if (!enemy.isPerformingAbility)
-                {
-                    enemy.animator.SetTrigger("TakeDamage");
-                }
-                knockbackManager.ApplyKnockback(knockbackDirection, (knockbackForce + 3), isPlayer: false);
-                staggerHealth = 0f;
-            }
-            else if (knockbackForce > 0)
-            {
-                knockbackManager.ApplyKnockback(knockbackDirection, knockbackForce, isPlayer: false);
-            }
         }
-        else if (currentHealth <= 0)
+        
+        if (currentHealth <= 0)
         {
-            Die();
+            isDead = true;
+            DieWithKnockback(knockbackDirection, knockbackForce + 8);
+            return;
         }
-    }
-
-    public void Execute(float damage, Vector2 knockbackDirection, float knockbackForce, bool giveRewards)
-    {
-        float modifiedDamage = PlayerCombat.Instance.ApplyDamageModifiers(damage, gameObject);
-        float onHitDamage = PlayerCombat.Instance.ApplyOnHitModifiers(0f, gameObject);
-        float totalDamage = modifiedDamage + onHitDamage;
-        currentHealth -= totalDamage;
-        TriggerVisualFeedback();
-
-        PlayerCombat.Instance.HandleOnHit(gameObject);
-        if (currentHealth > 0)
+        
+        if (ShouldTriggerStagger() && !isDead)
         {
-            currentHealth = 0;
-        }
+            Debug.LogWarning("staggering enemy");
+            if (!enemy.isPerformingAbility)  enemy.animator.SetTrigger("TakeDamage");
 
-        ShowDamageNumber(modifiedDamage, Color.red, 16f);
-        if (onHitDamage != 0)
-        {
-            ShowDamageNumber(onHitDamage, Color.yellow, 10f, offsetPosition);
+            knockbackManager.ApplyKnockback(knockbackDirection, (knockbackForce + 3), isPlayer: false);
+            staggerHealth = 0f;
         }
-
-        if (giveRewards)
-        {
-            ShowDamageNumber(modifiedDamage, Color.red, 16f);
-            if (onHitDamage != 0)
-            {
-                ShowDamageNumber(onHitDamage, Color.yellow, 10f, offsetPosition);
-            }
-
-            DieWithKnockback(knockbackDirection, knockbackForce);
-        }
-        else
+        else if (knockbackForce > 0)
         {
             knockbackManager.ApplyKnockback(knockbackDirection, knockbackForce, isPlayer: false);
-            Delete();
+        }
+    }
+    
+    public void ShowDamageNumber(float damage, Color color, float size = 12, Vector3? customPosition = null)
+    {
+        if (enemy.damageCanvas == null) return;
+        damage = Mathf.Round(damage);
+        Vector3 damagePosition = customPosition ?? transform.position + new Vector3(0, 1, 0);
+
+        GameObject damageNumber = Instantiate(enemy.damageNumberPrefab, damagePosition, Quaternion.identity, enemy.damageCanvas.transform);
+
+        DamageNumber damageNumberScript = damageNumber.GetComponent<DamageNumber>();
+        if (damageNumberScript != null)
+        {
+            damageNumberScript.SetValue(damage);
+            damageNumberScript.SetTextColor(color);
+            damageNumberScript.SetTextSize(size);
         }
     }
 
+    public void Heal(float amount)
+    {
+        float healableAmount = Mathf.Min(amount, maxHealth - currentHealth);
+
+        currentHealth += healableAmount;
+        currentHealth = Mathf.Min(currentHealth, maxHealth);
+        if (healableAmount > 0)
+        {
+            ShowDamageNumber(healableAmount, Color.green);
+        }
+    }
+
+    public void InflictStun(float duration)
+    {
+        Debug.Log("Stun afflicted");
+    }
+    
     protected virtual void TriggerVisualFeedback()
     {
         if (feedbackManager != null)
@@ -128,45 +131,16 @@ public class EnemyHealthManager : MonoBehaviour, IDamageable
         }
     }
 
-    private bool ShouldTriggerStagger()
+    protected virtual bool ShouldTriggerStagger()
     {
+        if (isDead) return false;
         float staggerThreshold = maxHealth * staggerThresholdPercentage;
         return staggerHealth >= staggerThreshold && currentHealth > 0;
     }
 
-    public void InstantKill(float currentHealth, Vector2 knockbackDirection, float knockbackForce)
-    {
-        if (currentHealth > 0)
-        {
-            Debug.Log("Enemy executed!");
-            Execute(currentHealth, knockbackDirection, knockbackForce, true);
-        }
-    }
-
-    public void DeathOnStageEnd(Transform knockbackPoint, bool hasKnockback = false)
-    {
-        if (hasKnockback)
-        {
-            Vector2 knockbackDirection = (enemy.transform.position - knockbackPoint.position).normalized;
-
-            if (currentHealth > 0)
-            {
-                Debug.Log("Enemy deleted!");
-
-                float distanceToPlayer = Vector3.Distance(transform.position, knockbackPoint.position);
-                float knockbackForce = Mathf.Clamp(1f / distanceToPlayer * 50f, 10f, 100f);
-
-                Execute(currentHealth, knockbackDirection, knockbackForce, false);
-            }
-        }
-        else
-        {
-            Execute(currentHealth, Vector2.zero, 0f, false);
-        }
-    }
-
     protected virtual void DieWithKnockback(Vector2 knockbackDirection, float knockbackForce)
     {
+        Debug.LogWarning("DEATH with knockback!");
         knockbackManager.ApplyKnockback(knockbackDirection, knockbackForce, isPlayer: false);
         Die();
     }
@@ -181,6 +155,14 @@ public class EnemyHealthManager : MonoBehaviour, IDamageable
         enemy.TransitionToState(enemy.deathState);
     }
 
+    private void GrantXP()
+    {
+        if (xpManager != null && !enemy.isDead)
+        {
+            Debug.Log("Enemy gave" + xpReward);
+            xpManager.AddXP(xpReward);
+        }
+    }
     private void Delete()
     {
         if (enemy.isDead) return;
@@ -200,14 +182,6 @@ public class EnemyHealthManager : MonoBehaviour, IDamageable
         return activeEffects.Any(effect => effect is T );
     }
 
-    public void RemoveStatusEffect(StatusEffect effect)
-    {
-        if (activeEffects.Contains(effect))
-        {
-            activeEffects.Remove(effect);
-        }
-    }
-
     public void RemoveAllStatusEffects()
     {
         // Iterate over a copy of the list to avoid modifying the list while iterating
@@ -215,7 +189,7 @@ public class EnemyHealthManager : MonoBehaviour, IDamageable
 
         foreach (StatusEffect effect in effectsToRemove)
         {
-            effect.Remove(gameObject, false);
+            effect.RemoveEffect();
             activeEffects.Remove(effect);
             Debug.Log($"Removed all active effects.");
         }
@@ -233,44 +207,32 @@ public class EnemyHealthManager : MonoBehaviour, IDamageable
         }
         Debug.Log("All FX attached to enemy have been removed.");
     }
-
-
-    public void Heal(float amount)
+    
+    public void ResetDeathState()
     {
-        float healableAmount = Mathf.Min(amount, maxHealth - currentHealth);
-
-        currentHealth += healableAmount;
-        currentHealth = Mathf.Min(currentHealth, maxHealth);
-        if (healableAmount > 0)
-        {
-            ShowDamageNumber(healableAmount, Color.green);
-        }
-
+        staggerHealth = 0;
+        isDead = false;
     }
+    
+    /*public void DeathOnStageEnd(Transform knockbackPoint, bool hasKnockback = false)
+   {
+       if (hasKnockback)
+       {
+           Vector2 knockbackDirection = (enemy.transform.position - knockbackPoint.position).normalized;
 
-    public void ShowDamageNumber(float damage, Color color, float size = 12, Vector3? customPosition = null)
-    {
-        if (enemy.damageCanvas == null) return;
+           if (currentHealth > 0)
+           {
+               Debug.Log("Enemy deleted!");
 
-        Vector3 damagePosition = customPosition ?? transform.position + new Vector3(0, 1, 0);
+               float distanceToPlayer = Vector3.Distance(transform.position, knockbackPoint.position);
+               float knockbackForce = Mathf.Clamp(1f / distanceToPlayer * 50f, 10f, 100f);
 
-        GameObject damageNumber = Instantiate(enemy.damageNumberPrefab, damagePosition, Quaternion.identity, enemy.damageCanvas.transform);
-
-        DamageNumber damageNumberScript = damageNumber.GetComponent<DamageNumber>();
-        if (damageNumberScript != null)
-        {
-            damageNumberScript.SetValue(damage);
-            damageNumberScript.SetTextColor(color);
-            damageNumberScript.SetTextSize(size);
-        }
-    }
-
-    private void GrantXP()
-    {
-        if (xpManager != null && !enemy.isDead)
-        {
-            Debug.Log("Enemy gave" + xpReward);
-            xpManager.AddXP(xpReward);
-        }
-    }
+               TakeDamage(currentHealth, knockbackDirection, knockbackForce, DamageSource.Execution);
+           }
+       }
+       else
+       {
+           TakeDamage(currentHealth, Vector2.zero, 0f, DamageSource.Execution);
+       }
+   }*/
 }

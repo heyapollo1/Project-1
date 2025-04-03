@@ -6,74 +6,61 @@ using UnityEngine;
 public class Bullet : MonoBehaviour
 {
     public Rigidbody2D rb;
-    public GameObject impactEffect;
-    public Sprite muzzleFlash;
+    //public SpriteRenderer spriteRend;
+    //public GameObject impactEffect;
+    //public Sprite muzzleFlash;
     public TrailRenderer trail;
-    private Sprite defaultSprite;
-
-private float damage;  
-    private float currentKnockbackForce;
-    private bool willInflictBleed;
-    private bool willInflictBurn;
-    private bool isCriticalHit;
-
-    public int framesToFlash = 3; 
     public float destroyTime = 2f;  
+    //private Sprite defaultSprite;
 
-    private SpriteRenderer spriteRend;
+    private WeaponInstance weaponInstance;
+    private WeaponBase sourceWeapon;
+    private float damageAmount;  
+    private float knockBackAmount;
+    private float criticalHitChance;  
+    private float criticalHitDamage;
+    
     private bool hasHit = false; 
-
-    void Start()
-    {
-        spriteRend = GetComponent<SpriteRenderer>();
-        willInflictBleed = PlayerStatManager.Instance.AttemptToApplyStatusEffect(StatType.BleedChance);
-        willInflictBurn = PlayerStatManager.Instance.AttemptToApplyStatusEffect(StatType.BurnChance);
-        defaultSprite = spriteRend.sprite;
-    }
-
-    private void OnEnable()
+    //private List<StatusEffectTrigger> statusEffectTriggers = new();
+    private Dictionary<StatType, float> statusEffectTriggers = new();
+    
+    public void Initialize(WeaponBase sourceWeapon, Dictionary<StatType, float> statusEffectTriggers)
     {
         hasHit = false;
-        if (trail != null)
-        {
-            trail.Clear();
-        }
-
+        if (trail != null) trail.Clear();
+        this.sourceWeapon = sourceWeapon;
+        damageAmount = sourceWeapon.currentDamage;
+        knockBackAmount = sourceWeapon.currentKnockbackForce;
+        criticalHitChance = sourceWeapon.currentCriticalHitChance;
+        criticalHitDamage = sourceWeapon.currentCriticalHitDamage;
+        this.statusEffectTriggers = statusEffectTriggers;
+        //defaultSprite = spriteRend.sprite;
+        Debug.Log($"Bullet Projectile {sourceWeapon}, {damageAmount}, {knockBackAmount}, {criticalHitChance}, {criticalHitDamage}");
         StartCoroutine(ReturnToPoolAfterTime());
-    }
-
-    public void SetStats(float damageAmount, float knockBackAmount, bool criticalHit = false)
-    {
-        damage = damageAmount;
-        currentKnockbackForce = knockBackAmount;
-        isCriticalHit = criticalHit;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (hasHit) return;
-
-        if (collision.TryGetComponent(out IDamageable damageable))
+        if (collision.TryGetComponent(out EnemyHealthManager damageable))
         {
             Vector2 knockbackDirection = (collision.transform.position - transform.position).normalized;
-            damageable.TakeDamage(damage, knockbackDirection, currentKnockbackForce, isCriticalHit);
+            CombatContext context = new CombatContext {damageDealt = damageAmount, source = gameObject, target = collision.gameObject,
+                sourceTags = sourceWeapon.classTags, statusTriggers = statusEffectTriggers};
+            
+            List<StatModifier> statMods = PlayerCombat.Instance.GetModifiedStats(context); // modify stats based on accrued player combat bonuses
+            if (statMods.Count > 0) ApplyStatMods(statMods);
+            bool isCriticalHit = AttributeManager.Instance.IsCriticalHit(criticalHitChance);
+            float finalDamage = isCriticalHit ? damageAmount : AttributeManager.Instance.CalculateCriticalHitDamage(damageAmount, criticalHitDamage);
 
-            if (willInflictBleed)
+            PlayerCombat.Instance.HandleOnHit(context);
+            
+            damageable.TakeDamage(finalDamage, knockbackDirection, knockBackAmount, DamageSource.Player, isCriticalHit);
+            
+            foreach (var trigger in statusEffectTriggers)
             {
-                StatusEffectManager.Instance.ApplyBleedEffect(collision.gameObject, 5f, PlayerStatManager.Instance.currentDamage / 2, 1f);
+                if (AttributeManager.Instance.ShouldTrigger(trigger.Value)) StatusEffectManager.Instance.TriggerStatusEffect(collision.gameObject, trigger.Key, finalDamage);
             }
-
-            if (willInflictBurn)
-            {
-                StatusEffectManager.Instance.ApplyBurnEffect(collision.gameObject, 5f, PlayerStatManager.Instance.currentDamage / 2);
-            }
-
-            Impact();
-        }
-        else if (collision.gameObject.CompareTag("BreakableObstacle"))
-        {
-            ObjectHealthManager obstacle = collision.gameObject.GetComponent<ObjectHealthManager>();
-            obstacle.TakeDamage(damage, isCriticalHit);
             Impact();
         }
         else if (collision.gameObject.CompareTag("InvincibleObstacle"))
@@ -85,7 +72,6 @@ private float damage;
     private void Impact()
     {
         hasHit = true;
-        isCriticalHit = false;
         rb.velocity = Vector2.zero;
         StopAllCoroutines();
         AudioManager.TriggerSound("Weapon_Impact", transform.position);
@@ -93,13 +79,37 @@ private float damage;
         ObjectPoolManager.Instance.ReturnToPool(gameObject);
     }
 
+    private void ApplyStatMods(List<StatModifier> statMods)
+    {
+        foreach (var mod in statMods)
+        {
+            switch (mod.statType)
+            {
+                case StatType.Damage:
+                    damageAmount += mod.flatBonus;
+                    damageAmount *= (1 + mod.percentBonus / 100f);
+                    break;
+                case StatType.KnockbackForce:
+                    knockBackAmount += mod.flatBonus;
+                    knockBackAmount *= (1 + mod.percentBonus / 100f);
+                    break;
+                case StatType.CriticalHitChance:
+                    criticalHitChance += mod.flatBonus;
+                    break;
+                case StatType.CriticalHitDamage:
+                    criticalHitDamage += mod.flatBonus;
+                    break;
+            }
+        }
+    }
+        
     private IEnumerator ReturnToPoolAfterTime()
     {
         yield return new WaitForSeconds(destroyTime);
         if (!hasHit)
         {
             hasHit = true;
-            isCriticalHit = false;
+            statusEffectTriggers.Clear();
             rb.velocity = Vector2.zero;
             if (gameObject.activeSelf)
             {

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FireBreathAbility : PlayerAbilityBase
+/*public class FireBreathAbility : PlayerAbilityBase
 {
     [Header("Fire Breath Specials")]
     public GameObject fireBreathFX;
@@ -27,7 +27,7 @@ public class FireBreathAbility : PlayerAbilityBase
     {
         Debug.Log("Initializing FireBreath Ability...");
         
-        abilityData.playerStats = PlayerStatManager.Instance;
+        abilityData.playerStats = AttributeManager.Instance;
         abilityData.player = GameObject.FindWithTag("Player").transform;
         abilityData.abilityPrefab = Resources.Load<GameObject>("PlayerAbilities/FireBreathAbility");
         abilityData.enemyLayer = LayerMask.GetMask("Enemy", "LowWall");
@@ -50,7 +50,7 @@ public class FireBreathAbility : PlayerAbilityBase
         currentCooldownRate = abilityData.baseCooldownRate;
         currentRange = abilityData.baseRange;
         currentKnockbackForce = abilityData.baseKnockbackForce;
-        currentCriticalHitDamage = PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage);
+        currentCriticalHitDamage = AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage);
         currentFireBreathAngle = baseFireBreathAngle;
         visualFireBreathAngle = (currentFireBreathAngle/5);
         var shape = fireBreathParticles.shape;
@@ -80,7 +80,7 @@ public class FireBreathAbility : PlayerAbilityBase
             var shape = fireBreathParticles.shape;
             shape.angle = visualFireBreathAngle;
             AudioManager.TriggerSound("Ability_FireBreath_Cast", transform.position);
-            fireBreathFX = FXManager.Instance.PlayFX("FireBreathFX", playerController.firePointTransform.position);
+            fireBreathFX = FXManager.Instance.PlayFX("FireBreathFX", playerController.castLocation.position);
 
             //fireBreathFX.transform.SetParent(abilityData.player);
             //fireBreathFX = FXManager.Instance.PlayFX("FireBreathFX", playerController.firePointTransform.position);
@@ -130,7 +130,7 @@ public class FireBreathAbility : PlayerAbilityBase
         Vector2 abilityPosition = abilityData.player.position;
         float halfAngle = currentFireBreathAngle;
 
-        bool willInflictBurn = PlayerStatManager.Instance.AttemptToApplyStatusEffect(StatType.BurnChance);
+        bool willInflictBurn = AttributeManager.Instance.AttemptToApplyStatusEffect(StatType.BurnChance);
         bool isCriticalHit = abilityData.playerStats.IsCriticalHit();
         float finalDamage = isCriticalHit ? currentCriticalHitDamage : currentDamage;
 
@@ -147,10 +147,10 @@ public class FireBreathAbility : PlayerAbilityBase
             {
                 if (collision.CompareTag("Enemy") && collision.TryGetComponent(out EnemyHealthManager enemyHealth))
                 {
-                    enemyHealth.TakeDamage(finalDamage, toTarget, currentKnockbackForce, isCriticalHit);
+                    enemyHealth.TakeDamage(finalDamage, toTarget, currentKnockbackForce, DamageSource.Player, isCriticalHit);
                     if (willInflictBurn)
                     {
-                        StatusEffectManager.Instance.ApplyBurnEffect(collision.gameObject, 5f, PlayerStatManager.Instance.currentDamage / 2);
+                        StatusEffectManager.Instance.ApplyBurnEffect(collision.gameObject, 5f, AttributeManager.Instance.currentDamage / 2);
                     }
                     hitTargets.Add(collision);
                 }
@@ -169,7 +169,7 @@ public class FireBreathAbility : PlayerAbilityBase
         currentDamage = abilityData.playerStats.GetStatValue(StatType.Damage, abilityData.baseDamage);
         currentRange = abilityData.playerStats.GetStatValue(StatType.Range, abilityData.baseRange);
         currentCooldownRate = abilityData.playerStats.GetStatValue(StatType.CooldownRate, abilityData.baseCooldownRate);
-        currentCriticalHitDamage = abilityData.playerStats.GetStatValue(StatType.CriticalHitDamage, PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage));
+        currentCriticalHitDamage = abilityData.playerStats.GetStatValue(StatType.CriticalHitDamage, AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage));
         currentFireBreathAngle = abilityData.playerStats.GetStatValue(StatType.Scorch, baseFireBreathAngle);
         visualFireBreathAngle = (currentFireBreathAngle / 5);
         var shape = fireBreathParticles.shape;
@@ -205,4 +205,4 @@ public class FireBreathAbility : PlayerAbilityBase
             previousPoint = nextPoint;
         }
     }
-}
+}*/

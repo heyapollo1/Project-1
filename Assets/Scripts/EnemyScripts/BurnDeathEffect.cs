@@ -29,7 +29,7 @@ public class BurnDeathEffect : IOnDeathEffect
                 var otherEnemyHealth = collider.GetComponent<EnemyHealthManager>();
                 if (otherEnemyHealth != null)
                 {
-                    StatusEffectManager.Instance.ApplyBurnEffect(collider.gameObject, 5f, PlayerStatManager.Instance.currentDamage / 2);
+                    StatusEffectManager.Instance.ApplyBurnEffect(collider.gameObject, 5f, AttributeManager.Instance.currentDamage / 2);
                     Vector2 knockbackDirection = (otherEnemyHealth.transform.position - enemy.transform.position).normalized;
                     otherEnemyHealth.TakeDamage(damage, knockbackDirection, knockbackForce);
                 }

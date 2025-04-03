@@ -27,28 +27,34 @@ public class PauseMenu : MonoBehaviour
 
     private void OnDestroy()
     {
+        Debug.LogWarning("Pause Menu Destroyed");
         resumeButton.onClick.RemoveListener(OnResumeClicked);
         mainMenuButton.onClick.RemoveListener(OnMainMenuClicked);
         resetButton.onClick.RemoveListener(OnResetClicked);
     }
-
+    
+    public void OpenPauseMenu()
+    {
+        GameStateManager.Instance.SetGameState(GameState.Paused);
+    }
+    
     public void OnResumeClicked()
     {
-        EventManager.Instance.TriggerEvent("HidePauseUI");
         GameStateManager.Instance.SetGameState(GameState.Playing);
+        UIManager.Instance.HidePauseMenu();
     }
 
     private void OnMainMenuClicked()
     {
-        EventManager.Instance.TriggerEvent("HidePauseUI");
         GameStateManager.Instance.SetGameState(GameState.MainMenu);
-        EventManager.Instance.TriggerEvent("LoadMainMenu");
+        GameManager.Instance.LoadMainMenu();
+        UIManager.Instance.HidePauseMenu();
     }
 
     private void OnResetClicked()
     {
-        EventManager.Instance.TriggerEvent("HidePauseUI");
         GameStateManager.Instance.SetGameState(GameState.Playing);
-        EventManager.Instance.TriggerEvent("LoadGameplay");
+        EventManager.Instance.TriggerEvent("ReturnToHub");
+        UIManager.Instance.HidePauseMenu();
     }
 }

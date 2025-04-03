@@ -98,4 +98,17 @@ public class PlayerAbilityDatabase : BaseManager
 
         return acquiredAbilities;
     }
+    
+    public PlayerAbilityData GetAbilityDataByName(string abilityName)
+    {
+        foreach (var abilityData in abilityDataList)
+        {
+            if (abilityData.abilityTitle == abilityName)
+            {
+                return abilityData;
+            }
+        }
+        Debug.LogWarning($"Ability '{abilityName}' not found in the database.");
+        return null;
+    }
 }

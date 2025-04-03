@@ -2,37 +2,60 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SwordItem : ItemData, ICombatEffect
+public class SwordItem : BaseItem
 {
-    private float damageOnHit = 5f;
-
-    public SwordItem(Sprite swordIcon)
+    private static readonly Dictionary<Rarity, List<StatModifier>> rarityModifiers = new()
     {
-        itemName = "Sword";
-        description = "Deal 5 bonus damage On-Hit.";
-        icon = swordIcon;
-        price = 50;
-        itemType = ItemType.Combat;
+        { Rarity.Common, new List<StatModifier> { new (StatType.Damage, 5f) } },
+        { Rarity.Rare, new List<StatModifier> { new (StatType.Damage, 10f) } },
+        { Rarity.Epic, new List<StatModifier> { new (StatType.Damage, 15f) } },
+        { Rarity.Legendary, new List<StatModifier> { new (StatType.Damage, 20f) } }
+    };
+    
+    public SwordItem(Sprite swordIcon, Rarity rarity) : base(
+        "Sword", swordIcon, 50, ItemType.Simple, rarity,
+        rarityModifiers[rarity])
+    {
+        UpdateDescription();
+    }
+    
+    public override void Upgrade()
+    {
+        if (currentRarity < Rarity.Legendary)
+        {
+            currentRarity++;
+            value = Mathf.RoundToInt(value * GetRarityMultiplier());
+            modifiers = rarityModifiers[currentRarity];
+            UpdateDescription();
+        }
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public bool TryGetNextUpgradeModifier(out StatModifier nextModifier)
     {
-        // No need to apply immediate stat modifiers, handled via OnHit
+        if (currentRarity < Rarity.Legendary)
+        {
+            Rarity nextRarity = currentRarity + 1;
+            if (rarityModifiers.TryGetValue(nextRarity, out var nextMods))
+            {
+                nextModifier = nextMods[0];
+                return true;
+            }
+        }
+
+        nextModifier = default;
+        return false;
     }
-
-    public override void Remove(PlayerStatManager playerStats)
+    
+    public override string UpdateDescription(bool showUpgrade = false)
     {
-        // Clean up if needed
-    }
+        float currentBonus = modifiers[0].flatBonus;
+        string upgradePart = "";
 
-    public void OnHit(GameObject target, PlayerStatManager playerStats) { }
+        if (showUpgrade && TryGetNextUpgradeModifier(out var next))
+        {
+            upgradePart = $" >> <color=#00FF00>{next.flatBonus}%</color>";
+        }
 
-    public void OnHealthChanged(float currentHealth, float maxHealth, PlayerStatManager playerStats) { }
-
-    public void OnEnemyKilled(GameObject enemy, PlayerStatManager playerStats) { }
-
-    public float ModifyOnHitDamage(float damage, GameObject target)
-    {
-        return damage + damageOnHit;
+        return  description = $"Increase damage by {currentBonus}%{upgradePart}.";
     }
 }

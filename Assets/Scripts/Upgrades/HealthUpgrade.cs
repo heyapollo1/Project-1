@@ -4,8 +4,6 @@ using UnityEngine;
 
 public class HealthUpgrade : UpgradeData
 {
-    public float baseHealthIncrease = 15f;  // Base health increase
-
     public HealthUpgrade(Sprite healthIcon)
     {
         // Set default values for this upgrade
@@ -14,7 +12,7 @@ public class HealthUpgrade : UpgradeData
         icon = healthIcon;
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Apply(AttributeManager playerStats)
     {
         // Create a new modifier for attack speed
         StatModifier maxHealthModifier = new StatModifier(
@@ -24,10 +22,10 @@ public class HealthUpgrade : UpgradeData
         // Apply the modifier to player stats
         playerStats.ApplyModifier(maxHealthModifier);
 
-        Debug.Log($"MovementSpeed upgraded. Current Health: {playerStats.GetStatValue(StatType.MovementSpeed, 1f)}");
+        Debug.Log($"Health upgraded. Current Health: {playerStats.GetStatValue(StatType.MaxHealth, AttributeManager.Instance.baseMaxHealth)}");
     }
 
-    public override void ScaleUpgrade(PlayerStatManager playerStats)
+    public override void ScaleUpgrade(AttributeManager playerStats)
     {
         upgradeLevel++;
         Apply(playerStats);  // Re-apply the health boost at the new level

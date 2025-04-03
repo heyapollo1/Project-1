@@ -9,13 +9,14 @@ public class ObjectPoolManager : BaseManager
     public override int Priority => 30;
 
     private Dictionary<string, Queue<GameObject>> objectPools;
-
+    private Dictionary<string, List<GameObject>> activeObjects = new Dictionary<string, List<GameObject>>();
+    
     protected override void OnInitialize()
     {
         EventManager.Instance.StartListening("SceneLoaded", OnSceneLoaded);
         EventManager.Instance.StartListening("SceneUnloaded", OnSceneUnloaded);
         EventManager.Instance.StartListening("ObjectPoolUpdate", OnObjectPoolUpdate);
-        EventManager.Instance.StartListening("TravelDeparture", HandleTransition);
+        EventManager.Instance.StartListening("PortalCleanup", HandlePortalTransition);
     }
 
     private void OnDestroy()
@@ -23,7 +24,7 @@ public class ObjectPoolManager : BaseManager
         EventManager.Instance.StopListening("SceneLoaded", OnSceneLoaded);
         EventManager.Instance.StopListening("SceneUnloaded", OnSceneUnloaded);
         EventManager.Instance.StopListening("ObjectPoolUpdate", OnObjectPoolUpdate);
-        EventManager.Instance.StopListening("TravelDeparture", HandleTransition);
+        EventManager.Instance.StopListening("PortalCleanup", HandlePortalTransition);
     }
 
     private void Awake()
@@ -66,42 +67,45 @@ public class ObjectPoolManager : BaseManager
         }
     }
 
-    public void HandleTransition(string destination)
+    public void HandlePortalTransition()
     {
-        if (destination != "Game") return;
-
-        foreach (var pool in objectPools)
+        CleanupPools();
+    }
+    
+    public void ReturnAllActiveObjects()
+    {
+        foreach (var kvp in activeObjects)
         {
-            Queue<GameObject> objects = pool.Value;
+            //string poolName = kvp.Key;
+            List<GameObject> activeList = kvp.Value;
 
-            while (objects.Count > 0)
+            for (int i = activeList.Count - 1; i >= 0; i--) // Iterate backward to avoid removal issues
             {
-                GameObject objectPrefab = objects.Dequeue();
-                if (objectPrefab != null)
-                {
-                    Destroy(objectPrefab);
-                }
+                GameObject obj = activeList[i];
+                ReturnToPool(obj); // Send it back to its respective pool
             }
         }
-    }
 
+        activeObjects.Clear(); // Clear the tracking list after returning
+        Debug.Log("All active objects have been returned to their pools.");
+    }
+    
     private void CleanupPools()
     {
+        ReturnAllActiveObjects(); 
+        
         foreach (var pool in objectPools)
         {
             Queue<GameObject> objects = pool.Value;
-
             while (objects.Count > 0)
             {
-                GameObject objectPrefab = objects.Dequeue();
-                if (objectPrefab != null)
+                GameObject objectInstance = objects.Dequeue();
+                if (objectInstance != null)
                 {
-                    Destroy(objectPrefab);
+                    Destroy(objectInstance);
                 }
             }
         }
-
-        objectPools.Clear();
         Debug.Log("Enemy pools cleaned up.");
     }
 
@@ -171,79 +175,103 @@ public class ObjectPoolManager : BaseManager
     {
         if (!objectPools.ContainsKey(tag))
         {
-            Debug.LogError($"Pool with tag {tag} doesn't exist.");
-            return null;
+            objectPools[tag] = new Queue<GameObject>();
+            Debug.LogWarning($"Created new pool for '{tag}'.");
         }
 
         Queue<GameObject> pool = objectPools[tag];
 
         if (pool.Count == 0)
         {
-            Debug.LogWarning($"Pool for {tag} is empty. Expanding.");
-            ExpandPool(tag, 2);
+            Debug.Log($"Pool '{tag}' empty. Expanding by 5.");
+            ExpandPool(tag, 5);
+
+            // Re-check pool after expansion
+            if (pool.Count == 0)
+            {
+                Debug.LogError($"Failed to expand pool for '{tag}'.");
+                return null;
+            }
         }
 
-        GameObject obj = objectPools[tag].Dequeue();
+        // Now get a bullet from the pool
+        GameObject obj = pool.Dequeue();
+        if (obj == null)
+        {
+            Debug.LogError($"Null object retrieved from pool '{tag}'!");
+            return null;
+        }
 
         obj.SetActive(true);
         obj.transform.position = position;
         obj.transform.rotation = rotation;
 
-        DropItem dropItem = obj.GetComponent<DropItem>();//check if its a droppable item
-        if (dropItem != null)
+        // Apply push if applicable
+        obj.GetComponent<DropItem>()?.ApplyPush();
+        if (!activeObjects.ContainsKey(tag))
         {
-            dropItem.ApplyPush();
+            activeObjects[tag] = new List<GameObject>();
         }
-
-        objectPools[tag].Enqueue(obj);
+        activeObjects[tag].Add(obj);
 
         return obj;
     }
 
     public void ReturnToPool(GameObject objectInstance)
     {
-        PooledObject pooledObject = objectInstance.GetComponent<PooledObject>();
-        if (pooledObject != null && objectPools.TryGetValue(pooledObject.PoolName, out Queue<GameObject> pool))
+        if (objectInstance == null)
         {
-            if (objectInstance.activeSelf)
+            Debug.LogWarning("Attempted to return a null object to the pool.");
+            return;
+        }
+
+        PooledObject pooledObject = objectInstance.GetComponent<PooledObject>();
+        if (pooledObject != null && objectPools.TryGetValue(pooledObject.PoolName, out var pool))
+        {
+            objectInstance.SetActive(false);
+            pool.Enqueue(objectInstance);
+            if (activeObjects.TryGetValue(pooledObject.PoolName, out var objectList))
             {
-                objectInstance.SetActive(false);
-                pool.Enqueue(objectInstance);
-                //Debug.Log($"Returned object '{objectInstance.name}' to pool '{pooledObject.PoolName}'.");
-            }
-            else
-            {
-                Debug.LogWarning($"Object '{objectInstance.name}' is already inactive. Skipping re-enqueue.");
+                objectList.Remove(objectInstance);
             }
         }
         else
         {
-            Debug.LogWarning($"No pool found for object '{objectInstance.name}'. Destroying object.");
+            Debug.LogWarning($"Object '{objectInstance.name}' doesn't belong to a pool. Destroying.");
             Destroy(objectInstance);
         }
     }
 
     public void ExpandPool(string objectName, int additionalSize)
     {
-        if (objectPools.TryGetValue(objectName, out Queue<GameObject> pool))
+        if (!objectPools.TryGetValue(objectName, out var pool))
         {
-            GameObject objectPrefab = Resources.Load<GameObject>($"Prefabs/{objectName}");
-            if (objectPrefab == null)
-            {
-                //Debug.LogWarning("Cannot expand pool.");
-                return;
-            }
-
-            for (int i = 0; i < additionalSize; i++)
-            {
-                GameObject instance = Instantiate(objectPrefab, transform);
-                instance.SetActive(false);
-
-                PooledObject pooledObject = instance.AddComponent<PooledObject>();
-                pooledObject.PoolName = objectName;
-                pool.Enqueue(instance);
-            }
-            //Debug.LogWarning($"Expanding pool for {objectName} by {additionalSize}");
+            pool = new Queue<GameObject>();
+            objectPools[objectName] = pool;
+            Debug.Log($"Created pool for '{objectName}' during expansion.");
         }
+
+        // Load prefab from Resources
+        GameObject objectPrefab = Resources.Load<GameObject>($"Prefabs/{objectName}");
+        if (objectPrefab == null)
+        {
+            Debug.LogError($"Prefab '{objectName}' not found in Resources/Prefabs.");
+            return;
+        }
+
+        // Instantiate new objects and add them to the pool
+        for (int i = 0; i < additionalSize; i++)
+        {
+            GameObject newObj = Instantiate(objectPrefab, transform);
+            newObj.SetActive(false);
+
+            // Track pool membership
+            var pooledObject = newObj.AddComponent<PooledObject>();
+            pooledObject.PoolName = objectName;
+
+            pool.Enqueue(newObj);
+        }
+
+        Debug.Log($"Expanded pool '{objectName}' by {additionalSize}. New count: {pool.Count}");
     }
 }

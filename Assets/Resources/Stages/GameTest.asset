@@ -12,11 +12,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76384962e93934ed5a1e9e29e7eaf19b, type: 3}
   m_Name: GameTest
   m_EditorClassIdentifier: 
+  stageName: THE CUM
+  stageDescription: 'Testing: stage description.'
+  stageIcon: {fileID: 103605028, guid: f94c7f765362c4ee7a7f32e3cc9a8394, type: 3}
   Stages:
   - stageNumber: 1
+    isBossStage: 0
+    wavesInStage:
+    - waveNumber: 1
+      spawnInterval: 0.2
+      enemiesPerSpawn: 1
+      enemyRequirements:
+      - enemyPrefab: {fileID: 8209470775787424774, guid: 50bf7c0ab20ce4c108577b7f83212f05, type: 3}
+        enemyType: DogEnemy
+        spawnWeight: 80
+      - enemyPrefab: {fileID: 8209470775787424774, guid: 9501700f006f6486690ff672c07b9e40, type: 3}
+        enemyType: BaseEnemy
+        spawnWeight: 20
+  - stageNumber: 2
+    isBossStage: 0
+    wavesInStage:
+    - waveNumber: 1
+      spawnInterval: 0.2
+      enemiesPerSpawn: 1
+      enemyRequirements:
+      - enemyPrefab: {fileID: 8209470775787424774, guid: 93a2a01318fc84a4889bc9b3ea6be02b, type: 3}
+        enemyType: BoomerEnemy
+        spawnWeight: 100
+  - stageNumber: 2
     isBossStage: 1
     wavesInStage:
-    - waveNumber: 0
+    - waveNumber: 1
       spawnInterval: 1
       enemiesPerSpawn: 1
       enemyRequirements:

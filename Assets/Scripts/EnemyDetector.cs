@@ -4,10 +4,18 @@ using UnityEngine;
 
 public class EnemyDetector : MonoBehaviour
 {
+    public static EnemyDetector Instance;
+    
     List<GameObject> enemiesInRange = new List<GameObject>();
 
     private float debugRange = 3.5f;
 
+    void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
+    
     public GameObject FindNearestEnemyInRange(float detectionRange)
     {
         Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, detectionRange);

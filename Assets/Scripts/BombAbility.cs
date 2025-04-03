@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BombAbility : PlayerAbilityBase
+/*public class BombAbility : PlayerAbilityBase
 {
     [Header("Bomb Specials")]
     //public GameObject AoEIndicatorPrefab;
@@ -29,7 +29,7 @@ public class BombAbility : PlayerAbilityBase
     {
         Debug.Log("Initializing Bomb Ability...");
 
-        abilityData.playerStats = PlayerStatManager.Instance;
+        abilityData.playerStats = AttributeManager.Instance;
         abilityData.player = GameObject.FindWithTag("Player").transform;
         abilityData.abilityPrefab = Resources.Load<GameObject>("PlayerAbilities/BombAbility");
         abilityData.enemyDetector = abilityData.player.GetComponent<EnemyDetector>();
@@ -56,7 +56,7 @@ public class BombAbility : PlayerAbilityBase
         currentCooldownRate = abilityData.baseCooldownRate;
         currentRange = abilityData.baseRange;
         currentKnockbackForce = abilityData.baseKnockbackForce;
-        currentCriticalHitDamage = PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage);
+        //currentCriticalHitDamage = AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage);
         currentAreaSize = baseAreaSize;
     }
 
@@ -165,7 +165,7 @@ public class BombAbility : PlayerAbilityBase
         {
             if (enemy.TryGetComponent(out EnemyHealthManager enemyHealth))
             {
-                float finalDamage = abilityData.playerStats.IsCriticalHit()
+                float finalDamage = abilityData.playerStats.IsCriticalHit(currentCriticalHitDamage)
                     ? currentDamage * currentCriticalHitDamage
                     : currentDamage;
 
@@ -222,7 +222,7 @@ public class BombAbility : PlayerAbilityBase
         currentDamage = abilityData.playerStats.GetStatValue(StatType.Damage, abilityData.baseDamage);
         currentRange = abilityData.playerStats.GetStatValue(StatType.Range, abilityData.baseRange);
         currentCooldownRate = abilityData.playerStats.GetStatValue(StatType.CooldownRate, abilityData.baseCooldownRate);
-        currentCriticalHitDamage = PlayerStatManager.Instance.CalculateCriticalHitDamage(currentDamage);
+        currentCriticalHitDamage = AttributeManager.Instance.CalculateCriticalHitDamage(currentDamage);
         currentAreaSize = abilityData.playerStats.GetStatValue(StatType.AreaSize, baseAreaSize);
         if (activeAoEIndicator != null)
         {
@@ -289,4 +289,4 @@ public class BombAbility : PlayerAbilityBase
         Gizmos.DrawLine(new Vector3(leftCircleCenter.x + capsuleRadius, leftCircleCenter.y + capsuleRadius, 0),
                         new Vector3(rightCircleCenter.x - capsuleRadius, rightCircleCenter.y + capsuleRadius, 0));
     }
-}
+}*/

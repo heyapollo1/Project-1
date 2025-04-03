@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PortalCollider : MonoBehaviour
+/*public class PortalCollider : MonoBehaviour
 {
     public Portal parentPortal;
     public bool isPlayerNearby = false;
@@ -13,7 +13,7 @@ public class PortalCollider : MonoBehaviour
         if (!enteredPortal && isPlayerNearby && Input.GetKeyDown(KeyCode.C))
         {
             enteredPortal = true;
-            parentPortal?.HandlePlayerEnter();
+            parentPortal?.EnterPortal();
         }
     }
 
@@ -34,4 +34,4 @@ public class PortalCollider : MonoBehaviour
             Tooltip.Instance.HideTooltip();
         }
     }
-}
+}*/

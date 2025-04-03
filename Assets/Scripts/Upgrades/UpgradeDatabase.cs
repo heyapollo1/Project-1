@@ -39,18 +39,15 @@ public class UpgradeDatabase : BaseManager
         Sprite movementSpeedIcon = Resources.Load<Sprite>("Icons/MovementSpeedUpgrade");
         Sprite criticalHitChanceIcon = Resources.Load<Sprite>("Icons/CriticalHitChanceUpgrade");
         Sprite criticalHitDamageIcon = Resources.Load<Sprite>("Icons/CriticalHitDamageUpgrade");
-        Sprite rangeIcon = Resources.Load<Sprite>("Icons/RangeUpgrade");
         Sprite armourIcon = Resources.Load<Sprite>("Icons/ArmourUpgrade");
-
-        // Initialize available upgrades with their default values
-        availableUpgrades.Add(new CooldownRateUpgrade(cooldownRateIcon));
+        
+        //availableUpgrades.Add(new CooldownRateUpgrade(cooldownRateIcon));
         availableUpgrades.Add(new HealthUpgrade(healthIcon));
         availableUpgrades.Add(new DamageUpgrade(damageIcon));
         availableUpgrades.Add(new MovementSpeedUpgrade(movementSpeedIcon));
         availableUpgrades.Add(new CriticalHitChanceUpgrade(criticalHitChanceIcon));
         availableUpgrades.Add(new CriticalHitDamageUpgrade(criticalHitDamageIcon));
-        availableUpgrades.Add(new RangeUpgrade(rangeIcon));
-        availableUpgrades.Add(new ArmourUpgrade(armourIcon));
+        //availableUpgrades.Add(new ArmourUpgrade(armourIcon));
     }
 
     // Method to get list of random upgrades
@@ -79,6 +76,19 @@ public class UpgradeDatabase : BaseManager
     {
         availableUpgrades.Add(newUpgrade);
         Debug.Log($"Added upgrade: {newUpgrade.upgradeName}");
+    }
+    
+    public UpgradeData GetUpgradeByName(string upgradeName)
+    {
+        foreach (var upgrade in availableUpgrades)
+        {
+            if (upgrade.upgradeName == upgradeName)
+            {
+                return upgrade;
+            }
+        }
+        Debug.LogWarning($"Item '{upgradeName}' not found in the database.");
+        return null;
     }
 
     public void ResetUpgrades()

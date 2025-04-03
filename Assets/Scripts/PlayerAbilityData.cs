@@ -16,7 +16,7 @@ public class PlayerAbilityData : ScriptableObject
 
     public GameObject abilityPrefab;
     public Transform player;
-    public PlayerStatManager playerStats;
+    public AttributeManager playerStats;
     public EnemyDetector enemyDetector;
     public Slider cooldownSlider;
     public LayerMask enemyLayer;

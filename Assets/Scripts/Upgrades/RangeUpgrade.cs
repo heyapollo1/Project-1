@@ -14,7 +14,7 @@ public class RangeUpgrade : UpgradeData
         icon = rangeIcon;
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Apply(AttributeManager playerStats)
     {
         // Create a new modifier for attack speed
         StatModifier rangeModifier = new StatModifier(
@@ -27,7 +27,7 @@ public class RangeUpgrade : UpgradeData
         Debug.Log($"Attack Speed upgraded. Current Attack Speed: {playerStats.GetStatValue(StatType.Range, 1f)}");
     }
 
-    public override void ScaleUpgrade(PlayerStatManager playerStats)
+    public override void ScaleUpgrade(AttributeManager playerStats)
     {
         upgradeLevel++;
         Apply(playerStats);  // Re-apply the attack speed boost at the new level

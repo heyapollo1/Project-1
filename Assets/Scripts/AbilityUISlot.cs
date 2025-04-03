@@ -26,7 +26,6 @@ public class AbilityUISlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         }
     }
 
-
     public void Initialize(PlayerAbilityBase ability)
     {
         if (ability == null)
@@ -93,12 +92,12 @@ public class AbilityUISlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         if (associatedAbility != null)
         {
-            Tooltip.Instance.ShowTooltip(associatedAbility.abilityData.abilityTitle, associatedAbility.abilityData.abilityDescription);
+            //TooltipManager.Instance.ShowStandardTooltip(associatedAbility.abilityData.abilityTitle, associatedAbility.abilityData.abilityDescription);
         }
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        Tooltip.Instance.HideTooltip();
+        TooltipManager.Instance.HideTooltip();
     }
 }

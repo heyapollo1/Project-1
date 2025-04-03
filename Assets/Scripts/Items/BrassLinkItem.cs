@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BrassLinkItem : ItemData
+/*public class BrassLinkItem : ItemData
 {
     float brassLinkArmourIncrease = 20f;
 
@@ -14,7 +14,7 @@ public class BrassLinkItem : ItemData
         price = 50;
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Apply(AttributeManager playerStats)
     {
         StatModifier brassLinkModifier = new StatModifier(
             StatType.Armour, flatBonus: brassLinkArmourIncrease
@@ -26,7 +26,7 @@ public class BrassLinkItem : ItemData
         Debug.Log($"Link applied. Current Armour: {playerStats.GetStatValue(StatType.Armour, 1f)}");
     }
 
-    public override void Remove(PlayerStatManager playerStats)
+    public override void Remove(AttributeManager playerStats)
     {
         StatModifier brassLinkModifier = new StatModifier(
             StatType.Armour, flatBonus: 0f, percentBonus: brassLinkArmourIncrease
@@ -35,5 +35,5 @@ public class BrassLinkItem : ItemData
         playerStats.RemoveModifier(brassLinkModifier);
         Debug.Log($"Link removed. Current Armour: {playerStats.GetStatValue(StatType.Armour, 1f)}");
     }
-}
+}*/
 

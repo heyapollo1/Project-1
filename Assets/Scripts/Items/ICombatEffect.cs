@@ -4,10 +4,21 @@ using UnityEngine;
 
 public interface ICombatEffect
 {
-    void OnHealthChanged(float currentHealth, float maxHealth, PlayerStatManager playerStats);
-    void OnEnemyKilled(GameObject enemy, PlayerStatManager playerStats);
-    void OnHit(GameObject target, PlayerStatManager playerStats);
-    void Apply(PlayerStatManager playerStats);
-    float ModifyDamage(float damage, GameObject target) => damage;
-    float ModifyOnHitDamage(float damage, GameObject target) => damage;
+    void OnHit(CombatContext context);
+    void OnHurt(float currentHealth, float maxHealth);
+    void OnEnemyKilled(GameObject enemy, AttributeManager playerStats);
+    //float ModifyStats(StatModifier stats, CombatContext context);
+    List<StatModifier> ModifyStats(CombatContext context)
+    {
+        return null;
+    }
+}
+
+public struct CombatContext
+{
+    public float damageDealt;
+    public GameObject source;
+    public GameObject target;
+    public List<TagType> sourceTags;
+    public Dictionary<StatType, float> statusTriggers;
 }

@@ -9,7 +9,7 @@ public class PlayerAnimationAction : CutsceneAction
 
     public override IEnumerator Execute(CutsceneManager cutsceneManager, Action onComplete)
     {
-        Transform player = PersistentManager.Instance.playerInstance.transform;
+        Transform player = PlayerManager.Instance.playerInstance.transform;
         Animator playerAnimator = player.GetComponent<Animator>();
 
         if (playerAnimator == null)

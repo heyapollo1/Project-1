@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class VisualFeedbackManager : MonoBehaviour
 {
+    public static PlayerHealthManager Instance { get; private set; }
+    
     private MaterialPropertyBlock propertyBlock;
     private SpriteRenderer spriteRenderer;
     private float whiteFlashCooldownTimer = 0f;

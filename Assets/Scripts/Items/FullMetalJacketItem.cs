@@ -2,53 +2,60 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FullMetalJacketItem : ItemData, ICombatEffect
+public class FullMetalJacketItem : BaseItem
 {
-    private float lifeThreshold = 0.9f; // 90% health threshold
-    private float damageIncreasePercent = 90f; // +90% damage
+    private float damageMultiplier;
 
-    public FullMetalJacketItem(Sprite fullMetalJacketIcon)
+    public FullMetalJacketItem(Sprite fullMetalJacketIcon, Rarity rarity) 
+        : base("Full Metal Jacket", fullMetalJacketIcon, 50, ItemType.Combat, rarity, null, null, 
+            new FullMetalJacketEffect(GetDamageMultiplier[rarity]))
     {
-        itemName = ".308";
-        description = "Deal +90% damage against enemies above 90% health.";
-        icon = fullMetalJacketIcon;
-        price = 50;
-        itemType = ItemType.Combat;
+        damageMultiplier = GetDamageMultiplier[rarity];
+        UpdateDescription();
     }
-
-    public override void Apply(PlayerStatManager playerStats)
+    
+    private static readonly Dictionary<Rarity, float> GetDamageMultiplier = new()
     {
-        // No need to apply immediate stat modifiers, handled via OnHit
-    }
-
-    public override void Remove(PlayerStatManager playerStats)
+        { Rarity.Common, 0.5f },
+        { Rarity.Rare, 1.0f },
+        { Rarity.Epic, 1.5f },
+        { Rarity.Legendary, 2.0f }
+    };
+    
+    public bool TryGetNextUpgradeModifier(out float nextDamageMultiplier)
     {
-        // Clean up if needed
-    }
-
-    public void OnHit(GameObject target, PlayerStatManager playerStats) { }
-
-    public void OnHealthChanged(float currentHealth, float maxHealth, PlayerStatManager playerStats) { }
-
-    public void OnEnemyKilled(GameObject enemy, PlayerStatManager playerStats) { }
-
-    public float ModifyDamage(float damage, GameObject target)
-    {
-        EnemyHealthManager enemyHealth = target.GetComponent<EnemyHealthManager>();
-
-        if (enemyHealth != null)
+        if (currentRarity < Rarity.Legendary)
         {
-            // Calculate the health percentage of the enemy
-            float healthPercentage = enemyHealth.currentHealth / enemyHealth.maxHealth;
-
-            // If the enemy is above 90% health, apply the damage increase
-            if (healthPercentage >= lifeThreshold)
-            {
-                return Mathf.Ceil(damage * (1 + damageIncreasePercent / 100f));
-            }
+            Rarity nextRarity = currentRarity + 1;
+            if (GetDamageMultiplier.TryGetValue(nextRarity, out nextDamageMultiplier))
+                return true;
         }
 
-        // Return the original damage if the condition is not met
-        return damage;
+        nextDamageMultiplier = 0f;
+        return false;
+    }
+    
+    public override string UpdateDescription(bool showUpgrade = false)
+    {
+        string upgradePart = "";
+
+        if (showUpgrade && TryGetNextUpgradeModifier(out float nextChance))
+        {
+            upgradePart = $" >> <color=#00FF00>{nextChance * 100}%</color>";
+        }
+        
+        return description = $"Deal +{damageMultiplier * 100}%{upgradePart} bonus damage against enemies above 90% health.";
+    }
+    
+    public override void Upgrade()
+    {
+        if (currentRarity < Rarity.Legendary)
+        {
+            currentRarity++;
+            value = Mathf.RoundToInt(value * GetRarityMultiplier()); 
+            damageMultiplier = GetDamageMultiplier[currentRarity];
+            combatEffect = new FullMetalJacketEffect(damageMultiplier); 
+            UpdateDescription(); 
+        }
     }
 }

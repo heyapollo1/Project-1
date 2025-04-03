@@ -4,17 +4,16 @@ using UnityEngine;
 
 public class CooldownRateUpgrade : UpgradeData
 {
-    public float percentIncrease = 20f;  // Percentage attack speed increase
+    public float percentIncrease = 20f;
 
     public CooldownRateUpgrade(Sprite cooldownRateIcon)
     {
-        // Set default values
         upgradeName = "Volley";
         description = "Abilities recharge 20% faster";
         icon = cooldownRateIcon;
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Apply(AttributeManager playerStats)
     {
         // Create a new modifier for attack speed
         StatModifier cooldownRateModifier = new StatModifier(
@@ -27,7 +26,7 @@ public class CooldownRateUpgrade : UpgradeData
         Debug.Log($"CooldownReduction upgraded. Current CooldownReduction: {playerStats.GetStatValue(StatType.CooldownRate, 1f)}");
     }
 
-    public override void ScaleUpgrade(PlayerStatManager playerStats)
+    public override void ScaleUpgrade(AttributeManager playerStats)
     {
         upgradeLevel++;
         Apply(playerStats);  // Re-apply the attack speed boost at the new level

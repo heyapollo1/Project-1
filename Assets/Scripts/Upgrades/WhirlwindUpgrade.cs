@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WhirlwindUpgrade : UpgradeData
+/*public class WhirlwindUpgrade : UpgradeData
 {
     public float swingAmount = 1f; 
 
@@ -13,7 +13,7 @@ public class WhirlwindUpgrade : UpgradeData
         icon = cleaveSizeIcon;
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Apply(AttributeManager playerStats)
     {
         var cleaveAbility = PlayerAbilityManager.Instance.GetAbilityOfType<CleaveAbility>();
 
@@ -31,10 +31,10 @@ public class WhirlwindUpgrade : UpgradeData
         }
     }
 
-    public override void ScaleUpgrade(PlayerStatManager playerStats)
+    public override void ScaleUpgrade(AttributeManager playerStats)
     {
         upgradeLevel++;
         Apply(playerStats);
         Debug.Log("WhirlwindUpgrade upgrade leveled up to: " + upgradeLevel);
     }
-}
+}*/

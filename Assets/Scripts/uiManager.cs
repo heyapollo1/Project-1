@@ -1,40 +1,57 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
-using UnityEngine.SceneManagement;
 using System.Collections;
+using TMPro;
 
-public class UIManager : BaseManager
+public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
-    public override int Priority => 20;
-
+    
+    [Header("Menus and GUI")]
     public GameObject sceneUI;
     public GameOverMenu gameOverMenu;
     public PauseMenu pauseMenu;
-    public UpgradeSystemUI upgradeMenu;
-    public ShopUI shopUI;
     public VictoryMenu victoryMenu;
-
-    protected override void OnInitialize()
+    public UpgradeSystemUI upgradeMenu;
+    
+    [Header("Gameplay UI")]
+    [SerializeField] private Slider dodgeCooldownSlider;
+    [SerializeField] private Slider healthSlider;
+    [SerializeField] private TextMeshProUGUI currencyText;
+    [SerializeField] private TextMeshProUGUI xpText;
+    [SerializeField] private TextMeshProUGUI healthText;
+    [SerializeField] private TextMeshProUGUI playerLevelText;
+    
+    public void Initialize()
     {
-        EventManager.Instance.StartListening("ShowPauseUI", ShowPauseMenu);
-        EventManager.Instance.StartListening("HidePauseUI", HidePauseMenu);
+        Debug.LogWarning("UIManager Initialized");
+        EventManager.Instance.StartListening("HideUI", HideAllUI);
+        EventManager.Instance.StartListening("ShowUI", ShowAllUI);
         EventManager.Instance.StartListening("ShowGameOverUI", ShowGameOverMenu);
-        EventManager.Instance.StartListening("HideGameOverUI", HideGameOverMenu);
         EventManager.Instance.StartListening("ShowVictoryUI", ShowVictoryMenu);
         EventManager.Instance.StartListening("HideVictoryUI", HideVictoryMenu);
+        
+        EventManager.Instance.StartListening("XPChanged", UpdateXPUI);
+        EventManager.Instance.StartListening("UpdateLevelUI", UpdateLevelUI);
+        EventManager.Instance.StartListening("HealthChanged", UpdateHealthUI);
+        EventManager.Instance.StartListening("CurrencyChanged", UpdateCurrencyUI);
+        DodgeManager.Instance.OnCooldownUpdated += OnDodgeCooldownUpdated;
     }
 
     private void OnDestroy()
     {
-        EventManager.Instance.StopListening("ShowPauseUI", ShowPauseMenu);
-        EventManager.Instance.StopListening("HidePauseUI", HidePauseMenu);
+        Debug.LogWarning("UIManager destroyed");
+        EventManager.Instance.StopListening("HideUI", HideAllUI);
+        EventManager.Instance.StopListening("ShowUI", ShowAllUI);
         EventManager.Instance.StopListening("ShowGameOverUI", ShowGameOverMenu);
-        EventManager.Instance.StopListening("HideGameOverUI", HideGameOverMenu);
-        EventManager.Instance.StopListening("HideLevelUpUI", HideLevelUpMenu);
         EventManager.Instance.StopListening("ShowVictoryUI", ShowVictoryMenu);
         EventManager.Instance.StopListening("HideVictoryUI", HideVictoryMenu);
+        
+        EventManager.Instance.StopListening("XPChanged", UpdateXPUI);
+        EventManager.Instance.StopListening("UpdateLevelUI", UpdateLevelUI);
+        EventManager.Instance.StopListening("HealthChanged", UpdateHealthUI);
+        EventManager.Instance.StopListening("CurrencyChanged", UpdateCurrencyUI);
+        DodgeManager.Instance.OnCooldownUpdated -= OnDodgeCooldownUpdated;
     }
 
     void Awake()
@@ -42,52 +59,64 @@ public class UIManager : BaseManager
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
-
-    private void ShowPauseMenu()
+    
+    private void HideAllUI()
     {
-        Debug.Log("showing");
-
-        AudioManager.Instance.PlayUISound("UI_Open");
-        pauseMenu = FindObjectOfType<PauseMenu>();
-        pauseMenu.menu.SetActive(true);
+        sceneUI.SetActive(false);
     }
 
-    private void HidePauseMenu()
+    private void ShowAllUI()
     {
-        Debug.Log("hiding");
-        AudioManager.Instance.PlayUISound("UI_Close");
-        pauseMenu = FindObjectOfType<PauseMenu>();
+        sceneUI.SetActive(true);
+    }
+    
+    public static bool IsDraggingUI()
+    {
+        if (InventoryItemUI.draggedItem != null || ActiveWeaponUI.draggedWeapon != null)
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    public void ShowPauseMenu()
+    {
+        pauseMenu.menu.SetActive(true);
+        AudioManager.Instance.PlayUISound("UI_Open");
+        PauseMenu.Instance.OpenPauseMenu();
+    }
+
+    public void HidePauseMenu()
+    {
         pauseMenu.menu.SetActive(false);
+        AudioManager.Instance.PlayUISound("UI_Close");
     }
 
     private void ShowGameOverMenu()
     {
-        gameOverMenu = FindObjectOfType<GameOverMenu>();
-        StartCoroutine(ShowGameOverScreenWithDelay(0.7f));
+        StartCoroutine(ShowGameOverScreenWithDelay(1f));
     }
-
+    
     private IEnumerator ShowGameOverScreenWithDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
         gameOverMenu.menu.SetActive(true);
     }
-
-    private void HideGameOverMenu()
+    
+    public void HideGameOverUI()
     {
-        gameOverMenu = FindObjectOfType<GameOverMenu>();
         gameOverMenu.menu.SetActive(false);
+        AudioManager.Instance.PlayUISound("UI_Close");
     }
-
-    private void HideLevelUpMenu()
-    {
-        upgradeMenu = FindObjectOfType<UpgradeSystemUI>();
-        upgradeMenu.upgradePanel.SetActive(false);
-    }
-
+    
     private void ShowVictoryMenu()
     {
-        victoryMenu = FindObjectOfType<VictoryMenu>();
-        StartCoroutine(ShowVictoryScreenWithDelay(0.7f));
+        StartCoroutine(ShowVictoryScreenWithDelay(1f));
+    }
+    
+    private void HideVictoryMenu()
+    {
+        victoryMenu.menu.SetActive(false);
     }
 
     private IEnumerator ShowVictoryScreenWithDelay(float delay)
@@ -95,10 +124,68 @@ public class UIManager : BaseManager
         yield return new WaitForSeconds(delay);
         victoryMenu.menu.SetActive(true);
     }
-
-    private void HideVictoryMenu()
+    
+    public void HideLevelUpUI()
     {
-        victoryMenu = FindObjectOfType<VictoryMenu>();
-        victoryMenu.menu.SetActive(false);
+        upgradeMenu.upgradePanel.SetActive(false);
     }
+    
+    public void UpdateHealthUI(float currentHealth, float maxHealth)
+    {
+        Debug.LogWarning("hp changed");
+        healthSlider.value = currentHealth / maxHealth;
+        healthText.text = $"HP: {currentHealth} / {maxHealth}";
+    }
+
+    public void UpdateXPUI(float currentXP, float xpToNextLevel)
+    {
+        Debug.LogWarning("XP changed");
+        xpText.text = $"XP: {currentXP} / { xpToNextLevel}";
+    }
+
+    public void UpdateLevelUI(float currentLevel)
+    {
+        Debug.LogWarning("Level changed");
+        playerLevelText.text = $"Lvl { currentLevel}";
+    }
+
+    public void UpdateCurrencyUI(float currentCurrency)
+    {
+        Debug.LogWarning("currency changed");
+        currencyText.text = $"G: {currentCurrency}";
+    }
+    
+    public void StartDodgeUICooldown(float cooldownDuration)
+    {
+        dodgeCooldownSlider.value = 1;
+        OnDodgeCooldownUpdated(cooldownDuration, cooldownDuration);
+    }
+    
+    private void OnDodgeCooldownUpdated(float currentCooldown, float totalCooldown)
+    {
+        UpdateDodgeCooldownUI(currentCooldown, totalCooldown);
+    }
+    
+    public void UpdateDodgeCooldownUI(float currentCooldown, float totalCooldown)
+    {
+        if (currentCooldown > 0)
+        {
+            dodgeCooldownSlider.value = currentCooldown / totalCooldown;
+        }
+        else
+        {
+            dodgeCooldownSlider.value = 0;
+        }
+    }
+    
+    public void ApplyUIModifications()
+    {
+        UpdateXPUI(XPManager.Instance.currentXP, XPManager.Instance.xpToNextLevel);
+        UpdateLevelUI(XPManager.Instance.currentLevel);
+        UpdateHealthUI(PlayerHealthManager.Instance.currentHealth, PlayerHealthManager.Instance.maxHealth);
+        UpdateCurrencyUI(ResourceManager.Instance.currentCurrency);
+
+        Debug.LogWarning("UI Initialized Successfully.");
+    }
+
 }

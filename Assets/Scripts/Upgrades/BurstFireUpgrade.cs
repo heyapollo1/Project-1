@@ -14,7 +14,7 @@ public class BurstFireUpgrade : UpgradeData
         icon = burstFireIcon;
     }
 
-    public override void Apply(PlayerStatManager playerStats)
+    public override void Apply(AttributeManager playerStats)
     {
         // Create a new modifier for attack speed
         StatModifier burstFireModifier = new StatModifier(
@@ -27,7 +27,7 @@ public class BurstFireUpgrade : UpgradeData
         Debug.Log($"CriticalHitChance upgraded. BurstFire: {playerStats.GetStatValue(StatType.BurstFire, 1f)}");
     }
 
-    public override void ScaleUpgrade(PlayerStatManager playerStats)
+    public override void ScaleUpgrade(AttributeManager playerStats)
     {
         upgradeLevel++;
         Apply(playerStats);  // Re-apply the movement speed boost at the new level

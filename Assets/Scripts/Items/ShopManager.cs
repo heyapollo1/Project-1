@@ -5,123 +5,191 @@ using System.Collections.Generic;
 
 public class ShopManager : MonoBehaviour
 {
+    public static ShopManager Instance;
+    
     [Header("Shop Tester")]
-    public GameObject shopItemCardPrefab; // Prefab reference for shop items
-    private ShopUI shopUI; // Reference to the ShopUI
-
-    [Header("Shop Manager")]
-    public GameObject itemPrefab;
+    public GameObject shopItemCardPrefab;
+    
+    [Header("Shop Asset")]
+    public GameObject shopMap;
     public Pedestal[] pedestals;
+    
+    [HideInInspector] public StageBracket stageBracket;
+    public bool shopActive;
+    
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
 
     public void Initialize()
     {
-        EventManager.Instance.StartListening("TestShop", TriggerShopTester);
-        EventManager.Instance.StartListening("TravelDeparture", HandleShopPreparation);
-        //EventManager.Instance.StartListening("TravelArrival", HandleShopEntry);
-        shopUI = FindObjectOfType<ShopUI>();
-        shopUI.Initialize(this);
-    }
-
-    public void OnDestroy()
-    {
-        EventManager.Instance.StopListening("TestShop", TriggerShopTester);
-        EventManager.Instance.StopListening("TravelDeparture", HandleShopPreparation);
-        //EventManager.Instance.StopListening("TravelArrival", HandleShopEntry);
-    }
-
-    public void HandleShopEntry(string destination)
-    {
-        Debug.Log("Shop Entry Logic");
-    }
-
-    public void HandleShopPreparation(string destination)
-    {
-        if (destination != "Shop")
+        GameData gameData = SaveManager.LoadGame();
+        if (gameData.isNewGame) 
         {
-            foreach (var pedestal in pedestals)
-            {
-                if (pedestal.transform.childCount > 0)
-                {
-                    pedestal.DestroyItem();
-                }
-            }
+            Debug.Log("Starting a new game. Deactivating shop map.");
+            shopMap.SetActive(shopActive);
+            shopActive = false;
         }
-        if (destination == "Shop")
+    }
+    public void PrepareShop(StageBracket bracket)
+    {
+        if (shopActive) return;
+        shopActive = true;
+        stageBracket = bracket;
+        shopMap.SetActive(true);
+
+        AudioManager.Instance.PlayBackgroundMusic("Music_Shopping");
+        EventManager.Instance.TriggerEvent("ShowUI");
+        foreach (var pedestal in pedestals)
         {
-            foreach (var pedestal in pedestals)
+            object shopEntry = GetRandomShopEntry(stageBracket);
+
+            if (shopEntry is BaseItem item)
             {
-                ItemData randomItem = ItemDatabase.Instance.GetRandomItem();
-                SpawnItemOnPedestal(pedestal, randomItem);
+                ItemDatabase.Instance.RegisterActiveItem(item.itemName);
+                pedestal.SetItem(item);
+                Debug.Log($"assigning ITEM {item} to {pedestal.name}");
+            }
+            else if (shopEntry is WeaponInstance weapon)
+            {
+                WeaponDatabase.Instance.RegisterActiveWeapon(weapon.weaponTitle);
+                pedestal.SetWeapon(weapon);
+                Debug.Log($"assigning WEAPON {weapon.weaponTitle} to {pedestal.name}");
             }
         }
     }
-
-    public void TriggerShopTester()
+    
+    private object GetRandomShopEntry(StageBracket bracket)
     {
-        List<ItemData> randomItems = ItemDatabase.Instance.ShowRandomItems(3);
-        shopUI.OpenShop();
-        shopUI.DisplayItems(randomItems);
-    }
-
-    public bool TryBuyItem(ItemData selectedItem)
-    {
-        if (!CurrencyManager.Instance.HasEnoughFunds(selectedItem.price))
+        float roll = Random.value;
+        if (roll < 0.5f)
         {
-            Debug.Log("Not enough funds to buy item.");
-            return false;
+            return ItemDatabase.Instance.GetRandomItem(bracket);
+        }
+        else
+        {
+            return WeaponDatabase.Instance.GetRandomWeapon(bracket);
+        }
+    }
+    
+    public void LeaveShop()
+    {
+        if (!shopActive) return;
+        shopActive = false;
+        
+        ClearPedestals();
+        shopMap.SetActive(false);
+    }
+    
+    public void LoadShopState(WorldState state) // load state
+    {
+        shopActive = true;
+        shopMap.SetActive(true);
+        
+        if (state.pedestalItems.Count != pedestals.Length)
+        {
+            Debug.LogError("Mismatch between saved pedestal items and available pedestals!");
+            return;
+        }
+        
+        for (int i = 0; i < pedestals.Length; i++)
+        {
+            string pedestalItemData = state.pedestalItems[i];
+            if (string.IsNullOrEmpty(pedestalItemData) || pedestalItemData == "EMPTY")
+            {
+                pedestals[i].ResetPedestal();
+                continue;
+            }
+            
+            string[] parts = pedestalItemData.Split(':');
+            if (parts.Length != 3)
+            {
+                Debug.LogError($"Invalid pedestal entry format: {pedestalItemData}");
+                continue;
+            }
+            
+            string type = parts[0];
+            string name = parts[1];
+            Rarity rarity = Rarity.Common;
+            System.Enum.TryParse(parts[2], out rarity);
+            
+            if (type == "ITEM")
+            {
+                var item = ItemFactory.CreateItem(name, ItemDatabase.Instance.LoadItemIcon(name), rarity);
+                if (item != null) pedestals[i].SetItem(item);
+                else Debug.LogError($"Failed to load item: {name}");
+            }
+            else if (type == "WEAPON")
+            {
+                var weapon = WeaponDatabase.Instance.CreateWeaponInstance(name, rarity);
+                if (weapon != null) pedestals[i].SetWeapon(weapon);
+                else Debug.LogError($"Failed to load weapon: {name}");
+            }
+            else
+            {
+                Debug.LogError($"Unknown pedestal type: {type}");
+            }
         }
 
-        if (!InventoryManager.Instance.DoesInventoryHaveSpace())
-        {
-            Debug.Log("Not enough inventory space.");
-            return false;
-        }
-
-        // Deduct funds and add item to inventory
-        AudioManager.Instance.PlayUISound("Shop_Purchase");
-        CurrencyManager.Instance.SpendCurrency(selectedItem.price);
-        InventoryManager.Instance.AddItem(selectedItem);
-
-        // Trigger the ItemBought event
-        EventManager.Instance.TriggerEvent("ItemBought", selectedItem);
-
-        Debug.Log($"Item '{selectedItem.itemName}' successfully bought.");
-        return true;
     }
-
-    public void RerollItems()
+    
+    public List<string> GetPedestalItemNamesAndRarity() //Saving State
     {
-        AudioManager.Instance.PlayUISound("UI_Reroll");
-        //OpenShop();
-    }
-
-    private void SpawnItemOnPedestal(Pedestal pedestal, ItemData itemData)
-    {
-        if (itemData == null || itemPrefab == null) return;
-
-        // Instantiate a new item GameObject
-        GameObject newItem = Instantiate(itemPrefab, pedestal.itemSpawnPoint);
-
-        // Set its position to the pedestal's position
-        newItem.transform.localPosition = Vector3.zero;
-
-        // Initialize the item with the given ItemData
-        Item itemComponent = newItem.GetComponent<Item>();
-
-        if (itemComponent != null)
+        List<string> pedestalItems = new List<string>();
+        foreach (var pedestal in pedestals)
         {
-            itemComponent.Initialize(itemData);
+            if (pedestal.displayItem != null)
+            {
+                string name = pedestal.displayItem.itemName;
+                Rarity rarity = pedestal.displayItem.currentRarity;
+                pedestalItems.Add($"ITEM:{name}:{rarity}");
+            }
+            else if (pedestal.displayWeapon != null)
+            {
+                string name = pedestal.displayWeapon.weaponTitle;
+                Rarity rarity = pedestal.displayWeapon.rarity;
+                pedestalItems.Add($"WEAPON:{name}:{rarity}");
+            }
+            else
+            {
+                pedestalItems.Add("EMPTY");
+            }
         }
-        Debug.Log($"Item '{itemData}' set.");
-        pedestal.SetItem(itemData);
+        return pedestalItems;
     }
-
-    public void RerollShop()
+    
+    private void ClearPedestals()
     {
         foreach (var pedestal in pedestals)
         {
-            Pedestal pedestalScript = pedestal.GetComponent<Pedestal>();
-            pedestalScript.RerollItem();
+            Debug.LogError("Clearing pedestal items");
+            pedestal.ResetPedestal();
+        }
+    }
+    
+    public void RerollShop()
+    {
+        ClearPedestals();
+        foreach (var pedestal in pedestals)
+        {
+            object shopEntry = GetRandomShopEntry(stageBracket);
+
+            if (shopEntry is BaseItem item)
+            {
+                ItemDatabase.Instance.RegisterActiveItem(item.itemName);
+                pedestal.SetItem(item);
+                Debug.Log($"assigning ITEM {item} to {pedestal.name}");
+            }
+            else if (shopEntry is WeaponInstance weapon)
+            {
+                WeaponDatabase.Instance.RegisterActiveWeapon(weapon.weaponTitle);
+                pedestal.SetWeapon(weapon);
+                Debug.Log($"assigning WEAPON {weapon.weaponTitle} to {pedestal.name}");
+            }
+            Debug.Log("Rerolling pedestal items");
+            //pedestal.RerollItem(stageBracket);
         }
     }
 }

@@ -7,7 +7,6 @@ public class CustomSceneManager : BaseManager
     public static CustomSceneManager Instance { get; private set; }
 
     public override int Priority => 10;
-
     private string currentScene;
 
     protected override void OnInitialize()
@@ -20,12 +19,21 @@ public class CustomSceneManager : BaseManager
         else Destroy(gameObject);
     }
 
-    public void LoadScene(string sceneName)
+    public void LoadScene(string sceneName, GameData selectedSave = null, bool isNewGame = true)
     {
-        StartCoroutine(LoadSceneWithTransition(sceneName));
+        Debug.Log($"Loading scene: {sceneName} with {(selectedSave != null ? "save data" : "no save data")}");
+
+        // Only pass the selected save data if it's a gameplay scene
+        if (sceneName == "GameScene" && selectedSave == null && !isNewGame)
+        {
+            Debug.LogWarning("Attempted to load GameScene without save data. Creating new game data.");
+            selectedSave = new GameData();
+        }
+        
+        StartCoroutine(LoadSceneWithTransition(sceneName, selectedSave, isNewGame));
     }
 
-    private IEnumerator LoadSceneWithTransition(string targetScene)
+    private IEnumerator LoadSceneWithTransition(string targetScene, GameData selectedSave, bool isNewGame)
     {
         LoadingMenu.Instance.ShowLoadingScreen();
 
@@ -50,27 +58,36 @@ public class CustomSceneManager : BaseManager
 
         asyncLoad.allowSceneActivation = true;
         yield return new WaitUntil(() => asyncLoad.isDone);
-
         yield return new WaitForEndOfFrame();
 
         currentScene = targetScene;
 
-        EventManager.Instance.TriggerEvent("SceneLoaded", targetScene);
-        yield return new WaitUntil(() => asyncLoad.isDone);
-
         if (targetScene == "GameScene")
         {
+            EventManager.Instance.TriggerEvent("LoadPlayerFromSave", selectedSave, isNewGame);
+            if (selectedSave != null && !isNewGame)
+            {
+                SaveManager.ApplySaveData(selectedSave);
+                SaveManager.SaveGame(selectedSave);
+                Debug.Log("Save data applied after player spawn.");
+            }
+            EventManager.Instance.TriggerEvent("SceneLoaded", targetScene);
             yield return GameManager.Instance.WaitForDependenciesAndStartGame();
         }
-
-        //currentScene = targetScene;
-
+        else
+        {
+            EventManager.Instance.TriggerEvent("SceneLoaded", targetScene);
+        }
+        
+        yield return new WaitUntil(() => asyncLoad.isDone);
+        
         if (SceneManager.GetSceneByName(targetScene).isLoaded)
         {
+            Debug.Log($"Loaded scene: {targetScene}");
             LoadingMenu.Instance.HideLoadingScreen();
         }
     }
-
+    public string CurrentScene => currentScene;
     /*private IEnumerator LoadSceneWithTransition(string targetScene)
     {
         if (!string.IsNullOrEmpty(currentScene))

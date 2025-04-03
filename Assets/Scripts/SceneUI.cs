@@ -6,10 +6,9 @@ public class SceneUI : MonoBehaviour
     public GameObject sceneUI;
     public void Awake()
     {
-        Debug.LogWarning("Vicyory Menu Initialized");
+        Debug.LogWarning("Victory Menu Initialized");
         EventManager.Instance.StartListening("HideUI", HideAllUI);
         EventManager.Instance.StartListening("ShowUI", ShowAllUI);
-
         //menu.SetActive(false);
     }
 

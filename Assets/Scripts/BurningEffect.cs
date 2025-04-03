@@ -5,26 +5,21 @@ using UnityEngine;
 public class BurningEffect : StatusEffect
 {
     public float burnDamage;
-    //public float burnExplosionDamage;
-    //private float burnDelay;
     private float burnDuration;
-    //private float burnExplosionRadius;
-    private EnemyHealthManager burnTarget;
     private int stackCount = 1;
     private float elapsedTime = 0f;
+    
     private GameObject burningFX;
-    //private BurnDeathEffect burnDeathEffect;
+    private ILivingEntity burnTarget;
 
-    public BurningEffect(float duration, float damage, EnemyHealthManager targetEnemy, MonoBehaviour owner, bool isEternal = false)
-        : base(duration, damage, owner, isEternal)
+   public BurningEffect(float duration, float damage, ILivingEntity target, MonoBehaviour coroutineRunner, bool isEternal = false)
+        : base(duration, damage, target, coroutineRunner, isEternal)
     {
         burnDuration = duration;
         burnDamage = damage;
-        burnTarget = targetEnemy;
-        //burnExplosionRadius = radius;
-        //burnExplosionDamage = burnDamage * 5;
-        //burnDeathEffect = new BurnDeathEffect(burnExplosionRadius, burnExplosionDamage, 3f);
+        burnTarget = target;
     }
+
 
     public void IncreaseDamage(float additionalDamage)
     {
@@ -39,12 +34,14 @@ public class BurningEffect : StatusEffect
         {
             yield return new WaitForSeconds(0.5f);
             isFirstApplication = false;
-            //DeathEffectManager.Instance.RegisterOnDeathEffect(burnTarget.gameObject, burnDeathEffect);
 
-            burningFX = FXManager.Instance.PlayFX("BurningFX", burnTarget.transform.position);
-            burningFX.transform.SetParent(burnTarget.transform);
-            burningFX.transform.localPosition = new Vector3(0f, -0.6f, 0f);
-            burningFX.transform.localScale = new Vector3(1, 1, 1);
+            if (burnTarget.GetEffectAnchor() != null)
+            {
+                burningFX = FXManager.Instance.PlayFX("BurningFX", burnTarget.GetEffectAnchor().position);
+                burningFX.transform.SetParent(burnTarget.GetEffectAnchor());
+                burningFX.transform.localPosition = new Vector3(0f, -0.6f, 0f);
+                burningFX.transform.localScale = Vector3.one;
+            }
         }
 
         Debug.Log($"Burn stack count: {stackCount}");
@@ -53,19 +50,17 @@ public class BurningEffect : StatusEffect
         {
             if (burnTarget != null)
             {
-                burnTarget.TakeDamage(burnDamage, Vector2.zero, 0f, false, true);
-                burnTarget.ShowDamageNumber(burnDamage, Color.yellow, 10f);
-                Debug.Log($"Burning applied {burnDamage} damage to {burnTarget.name}.");
+                burnTarget.TakeDamage(burnDamage, Vector2.zero, 0f, DamageSource.StatusEffect);
+                Debug.Log($"Burning applied {burnDamage} damage to {burnTarget}.");
+                //burnDamage *= 0.9f;
             }
-
             yield return new WaitForSeconds(0.5f);
             elapsedTime += 0.5f;
+            if (elapsedTime >= burnDuration || burnTarget.GetCurrentHealth() <= 0)
+            {
+                RemoveEffect();
+            }
         }
-
-        AutoDestroyParticle autoDestroy = burningFX.GetComponent<AutoDestroyParticle>();
-        autoDestroy.StopEffect();
-        burningFX.transform.SetParent(FXManager.Instance.transform);
-        FXManager.Instance.ReturnToPool(burningFX, "BurningFX");
     }
 
     public override void ResetDuration(float newDuration, float newDamage)
@@ -73,11 +68,24 @@ public class BurningEffect : StatusEffect
         burnDuration = newDuration;
         elapsedTime = 0f;
         IncreaseDamage(newDamage);
-        Debug.Log("Duration of effect refreshed to " + newDuration);
-        if (!isActive && EffectCoroutine() != null)
+        Debug.Log("Burn duration refreshed: " + newDuration);
+
+        if (!isActive)
         {
-            affectedTarget.StopCoroutine(effectCoroutine);
-            Apply();
+            ApplyEffect();
         }
+    }
+    
+    public override void RemoveEffect()
+    {
+        if (burningFX != null)
+        {
+            var autoDestroy = burningFX.GetComponent<AutoDestroyParticle>();
+            if (autoDestroy != null) autoDestroy.StopEffect();
+            burningFX.transform.SetParent(FXManager.Instance.transform);
+            FXManager.Instance.ReturnToPool(burningFX, "BurningFX");
+        }
+
+        base.RemoveEffect();
     }
 }

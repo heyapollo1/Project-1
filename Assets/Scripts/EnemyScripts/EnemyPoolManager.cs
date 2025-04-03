@@ -6,7 +6,7 @@ public class EnemyPoolManager : BaseManager
 {
     public static EnemyPoolManager Instance;
     public override int Priority => 30;
-
+    
     [System.Serializable]
     public class Pool
     {
@@ -16,21 +16,20 @@ public class EnemyPoolManager : BaseManager
         public int spawnWeight = 1;
     }
 
+    private Dictionary<string, int> enemyPoolSizes = new Dictionary<string, int>();
     private Dictionary<string, Queue<GameObject>> enemyPools = new Dictionary<string, Queue<GameObject>>();
     private Dictionary<string, int> enemyWeights = new Dictionary<string, int>();
 
     protected override void OnInitialize()
     {
         EventManager.Instance.StartListening("SceneUnloaded", OnSceneUnloaded);
-        EventManager.Instance.StartListening("TravelDeparture", HandleEnemyPoolPreparation);
-        //EventManager.Instance.StopListening("TravelArrival", OpenShop);
+        EventManager.Instance.StartListening("PortalCleanup", HandlePortalTransition);
     }
 
     private void OnDestroy()
     {
         EventManager.Instance.StopListening("SceneUnloaded", OnSceneUnloaded);
-        EventManager.Instance.StopListening("TravelDeparture", HandleEnemyPoolPreparation);
-        //EventManager.Instance.StopListening("TravelArrival", OpenShop);
+        EventManager.Instance.StopListening("PortalCleanup", HandlePortalTransition);
         CleanupPools();
     }
 
@@ -48,7 +47,7 @@ public class EnemyPoolManager : BaseManager
         }
     }
 
-    public void PrepareEnemyPool(StageSettings currentStage)
+    public void PrepareEnemyPool(StageSettings currentStage) //Setup for next stage
     {
         foreach (WaveSettings wave in currentStage.wavesInStage)
         {
@@ -56,22 +55,22 @@ public class EnemyPoolManager : BaseManager
             foreach (var enemyRequirement in wave.enemyRequirements)
             {
                 string enemyType = enemyRequirement.enemyType;
-
+                const int fixedPoolSize = 20;
+                
                 // Check if the pool for this enemy type already exists
                 if (!enemyPools.ContainsKey(enemyType))
                 {
                     Debug.Log($"Creating pool for enemy type: {enemyType}");
                     enemyPools[enemyType] = new Queue<GameObject>();
+                    enemyPoolSizes[enemyType] = fixedPoolSize;
                 }
 
-                const int fixedPoolSize = 20;
                 Queue<GameObject> pool = enemyPools[enemyType];
 
                 while (pool.Count < fixedPoolSize)
                 {
-                    Debug.Log($"Set false and queue pooled enemy");
+                    Debug.Log("Set false and queue pooled enemy");
                     GameObject newEnemy = Instantiate(enemyRequirement.enemyPrefab);
-                    Debug.Log($"Set false and queue pooled enemy");
                     newEnemy.SetActive(false); // Ensure it's inactive
                     pool.Enqueue(newEnemy);
                 }
@@ -80,7 +79,7 @@ public class EnemyPoolManager : BaseManager
 
         Debug.Log("Enemy pools prepared for the entire stage.");
     }
-
+    
     public void InitializeEnemyWeights(WaveSettings wave)
     {
         enemyWeights.Clear();
@@ -115,12 +114,11 @@ public class EnemyPoolManager : BaseManager
         EventManager.Instance.TriggerEvent("UpdateBossWave", wave);
     }
 
-    public void HandleEnemyPoolPreparation(string destination)
+    public void HandlePortalTransition()
     {
-        if (destination != "Game")
-        {
-            CleanupPools();
-        }
+        if (enemyPools.Count == 0) return;
+        
+        CleanupPools();
     }
 
     public void CleanupPools()
@@ -134,12 +132,13 @@ public class EnemyPoolManager : BaseManager
                 GameObject enemy = enemies.Dequeue();
                 if (enemy != null)
                 {
-                    Destroy(enemy); // Destroy all enemy objects
+                    Destroy(enemy);
                 }
             }
         }
-        //EnemyManager.Instance.ClearEnemies();
+        
         enemyPools.Clear();
+        enemyPoolSizes.Clear();
         enemyWeights.Clear();
         Debug.Log("Enemy pools cleaned up.");
     }
@@ -222,4 +221,43 @@ public class EnemyPoolManager : BaseManager
         }
         return null;
     }
+    
+    public Dictionary<string, int> GetPreppedPoolData()
+    {
+        return new Dictionary<string, int>(enemyPoolSizes);
+    }
+    
+    public void RecreatePoolsFromSave(WorldState worldState)
+    {
+        Debug.Log($"Stage Level: {worldState.currentStageIndex}. Config: {worldState.currentStageConfigName}");
+        StageConfig currentStageConfig = StageDatabase.Instance.GetStageByName(worldState.currentStageConfigName);
+        StageSettings currentStage = currentStageConfig.Stages[worldState.currentStageIndex];
+
+        foreach (WaveSettings wave in currentStage.wavesInStage)
+        {
+            foreach (var enemyRequirement in wave.enemyRequirements)
+            {
+                string enemyType = enemyRequirement.enemyType;
+                const int fixedPoolSize = 20;
+
+                if (!enemyPools.ContainsKey(enemyType))
+                {
+                    Debug.Log($"Creating pool for enemy type: {enemyType}");
+                    enemyPools[enemyType] = new Queue<GameObject>();
+                    enemyPoolSizes[enemyType] = fixedPoolSize;
+                }
+
+                Queue<GameObject> pool = enemyPools[enemyType];
+
+                while (pool.Count < fixedPoolSize)
+                {
+                    Debug.Log("Set false and queue pooled enemy");
+                    GameObject newEnemy = Instantiate(enemyRequirement.enemyPrefab);
+                    newEnemy.SetActive(false); 
+                    pool.Enqueue(newEnemy);
+                }
+            }
+        }
+    }
+    
 }

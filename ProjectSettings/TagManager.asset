@@ -23,6 +23,9 @@ TagManager:
   - SceneUI
   - CameraIntroPosition
   - WeaponHolder
+  - LeftHand
+  - RightHand
+  - Main Tag
   layers:
   - Default
   - TransparentFX
@@ -38,7 +41,7 @@ TagManager:
   - GroundCollider
   - Corpse
   - Orbs
-  - 
+  - Dodge
   - 
   - 
   - 

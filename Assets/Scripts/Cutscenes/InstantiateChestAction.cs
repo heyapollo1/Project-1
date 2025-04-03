@@ -7,6 +7,8 @@ public class InstantiateChestAction : CutsceneAction
 {
     public GameObject chestPrefab;
     public string rewardName;
+    [SerializeField] private Rarity rarity;
+    
     public bool isItem = false;
     public bool isWeapon = false;
     public Vector3 spawnPosition;
@@ -20,15 +22,15 @@ public class InstantiateChestAction : CutsceneAction
         }
 
         GameObject spawnedChest = Instantiate(chestPrefab, spawnPosition, Quaternion.identity);
-        ItemChest chestComponent = spawnedChest.GetComponentInChildren<ItemChest>();
+        TreasureChest chestComponent = spawnedChest.GetComponentInChildren<TreasureChest>();
 
         if (isItem)
         {
-            chestComponent.InitializeItemReward(rewardName);
+            chestComponent.InitializeItemReward(rewardName, rarity);
         }
         else if (isWeapon)
         {
-            chestComponent.InitializeWeaponReward(rewardName);
+            chestComponent.InitializeWeaponReward(rewardName, rarity);
         }
         else
         {

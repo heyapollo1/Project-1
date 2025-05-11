@@ -238,10 +238,10 @@ GameObject:
   - component: {fileID: -1464355443286308112}
   - component: {fileID: 8925995708557274931}
   - component: {fileID: 431153828472622105}
-  - component: {fileID: 1773595440937089375}
+  - component: {fileID: 319103896618268607}
   - component: {fileID: 5489954424118563095}
   m_Layer: 5
-  m_Name: ActiveWeapon
+  m_Name: ItemUIPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -390,7 +390,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &1773595440937089375
+--- !u!114 &319103896618268607
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -399,15 +399,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 5806811071410652938}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32ee97713c5514e20acfaab2c62968aa, type: 3}
+  m_Script: {fileID: 11500000, guid: 2bcf18d2cd2d2471b9c1d2f230af9823, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  weaponIcon: {fileID: 3398136597562312283}
-  cooldownSlider: {fileID: 8454566605661092581}
   highlightFX: {fileID: 7981161163430911439}
-  uiRarityVisual: {fileID: 5489954424118563095}
-  weaponKey: 
+  cooldownSlider: {fileID: 8454566605661092581}
+  icon: {fileID: 3398136597562312283}
+  itemRarityVisual: {fileID: 5489954424118563095}
+  rarity: 0
+  name: 
+  uniqueID: 
+  value: 0
   originalParent: {fileID: 0}
+  weaponKey: 
+  isWeapon: 0
+  isInHand: 0
+  isLeftHand: 0
 --- !u!114 &5489954424118563095
 MonoBehaviour:
   m_ObjectHideFlags: 0

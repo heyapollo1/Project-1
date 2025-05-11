@@ -21,7 +21,6 @@ public class PlayerItemDetector : MonoBehaviour
     
     public void AddInteractableItem(IInteractable obj)
     {
-        Debug.Log($"Added new interactable object");
         if (obj != null)
         {
             bool added = nearbyInteractables.Add(obj); // HashSet prevents duplicates automatically
@@ -34,14 +33,14 @@ public class PlayerItemDetector : MonoBehaviour
     
     public void RemoveInteractableItem(IInteractable obj)
     {
-        Debug.Log($"Removed new item");
+        //Debug.Log($"Removed new item");
         if (obj != null && nearbyInteractables.Contains(obj))
         {
-            Debug.Log($"Trying Removal new item");
+            //Debug.Log($"Trying Removal new item");
             bool removed = nearbyInteractables.Remove(obj); // HashSet prevents duplicates automatically
             if (removed)
             {
-                Debug.Log($"Successful Removed new item");
+                //Debug.Log($"Successful Removed new item");
                 UpdateTooltip();
             }
         }
@@ -49,13 +48,17 @@ public class PlayerItemDetector : MonoBehaviour
 
     private void Update()
     {
-        if (nearbyInteractables.Count <= 0 || TooltipManager.Instance.isHoverTooltipActive()) return;
+        bestItem = null;
         UpdateTooltip();
     }
 
     public void UpdateTooltip()
     {
-        //if (TooltipManager.Instance.GetActiveTooltip() != null) return; // Prevent UI conflicts
+        if (TooltipManager.Instance == null)
+        {
+            Debug.LogError("TooltipManager.Instance is null!");
+            return;
+        }
         if (TooltipManager.Instance.isHoverTooltipActive()) return;
         
         if (nearbyInteractables.Count == 0)
@@ -64,10 +67,14 @@ public class PlayerItemDetector : MonoBehaviour
             return;
         }
         
-        //IInteractable bestItem = null;
         float bestScore = float.MinValue;
+        if (PlayerController.Instance == null)
+        {
+            Debug.LogError("PlayerController.Instance is null!");
+            return;
+        }
         Vector3 playerPos = PlayerController.Instance.transform.position;
-        
+
         foreach (var item in nearbyInteractables)
         {
             MonoBehaviour monoItem = item as MonoBehaviour;
@@ -75,12 +82,10 @@ public class PlayerItemDetector : MonoBehaviour
             {
                 Vector3 itemPos = monoItem.transform.position; // ✅ Safe from null reference exceptions
                 float distance = Vector3.Distance(itemPos, playerPos);
-                Vector3 directionToItem = (itemPos - playerPos).normalized;
+                //Vector3 directionToItem = (itemPos - playerPos).normalized;
                 
                 float score = -distance;
-                //float score = (1f / distance);
-                //if (item == currentItem) score += 10f;
-                Debug.DrawLine(itemPos, playerPos + directionToItem, Color.green);
+                //Debug.DrawLine(itemPos, playerPos + directionToItem, Color.green);
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -88,14 +93,12 @@ public class PlayerItemDetector : MonoBehaviour
                 }
             }
         }
-        // If the best item is different, update the tooltip
-        if (bestItem != currentItem)
+        if (bestItem != currentItem && bestItem != null)
         {
             if (currentItem != null) currentItem.HideTooltip();
             currentItem = bestItem;
             currentItem.ShowTooltip();
             return;
-            //TooltipManager.Instance.SetWorldTooltip(currentItem, "Weapon"); 
         }
         
         currentItem = bestItem;

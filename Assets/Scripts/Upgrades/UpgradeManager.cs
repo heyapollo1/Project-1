@@ -7,7 +7,6 @@ public class UpgradeManager : MonoBehaviour
     public static UpgradeManager Instance;
     
     private List<UpgradeData> playerUpgrades = new List<UpgradeData>();
-
     private AttributeManager playerAttributes;
 
     void Awake()

@@ -26,7 +26,7 @@ public class StageUI : MonoBehaviour
         stageSplashText.gameObject.SetActive(false);
         
         Debug.LogWarning($"Initialized StageUI");
-        if (stageManager.isStageActive && !EncounterManager.Instance.CheckIfEncounterActive())
+        if (stageManager.stageIsActive && !EncounterManager.Instance.IsEncounterActive())
         {
             Debug.LogWarning($"Initialized Encounter StageUI");
             ActivateStageUI(stageManager.GetCurrentStageIndex(), 0);

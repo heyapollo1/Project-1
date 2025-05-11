@@ -122,7 +122,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.5
+  m_Radius: 0.1
 --- !u!50 &3580239924202536038
 Rigidbody2D:
   serializedVersion: 4
@@ -163,11 +163,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 3580239924202536038}
-  spriteRend: {fileID: 965769628857952804}
-  impactEffect: {fileID: 688300306664528235, guid: c5c2ce61d493a43499e85495f8718cde, type: 3}
-  muzzleFlash: {fileID: 92905106, guid: 589c5798eb8cc4c23885a7be80299582, type: 3}
   trail: {fileID: 4349124166267594987}
-  framesToFlash: 3
   destroyTime: 3
 --- !u!96 &4349124166267594987
 TrailRenderer:

@@ -9,9 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a224fe20de964ad08be72984b779636, type: 3}
+  m_Script: {fileID: 11500000, guid: ae14c5ea07ac94545bca39dc7c229006, type: 3}
   m_Name: TreasureEncounter
   m_EditorClassIdentifier: 
-  encounterIcon: {fileID: -212905196, guid: 7af1913f0ab43468f978c1710bdb3cbd, type: 3}
-  encounterName: Treasure
-  encounterDescription: find treasure
+  encounterName: TreasureEncounter
+  encounterDescription: Get a free item
+  encounterIcon: {fileID: 21300000, guid: 91d5809434da547aab18e2340e51124f, type: 3}
+  encounterType: 2
+  availableBrackets: 

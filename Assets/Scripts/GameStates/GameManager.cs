@@ -6,6 +6,7 @@ using System.Collections.Generic;
 public class GameManager : BaseManager
 {
     public static GameManager Instance { get; private set; }
+    
     public override int Priority => 30;
 
     private Dictionary<string, object> dependencies = new Dictionary<string, object>();
@@ -56,17 +57,6 @@ public class GameManager : BaseManager
         }
     }
 
-    public T GetDependency<T>(string key) where T : class
-    {
-        if (dependencies.TryGetValue(key, out var dependency))
-        {
-            return dependency as T;
-        }
-
-        Debug.LogError($"Dependency {key} not found!");
-        return null;
-    }
-
     public void MarkSystemReady(string systemName)
     {
         readySystems.Add(systemName);
@@ -85,7 +75,7 @@ public class GameManager : BaseManager
 
     public IEnumerator WaitForDependenciesAndStartGame()
     {
-        string[] requiredSystems = { "SpawnManager", "GridManager", "FlowFieldManager", "AbilityUI", "CameraManager", "CutsceneManager"};
+        string[] requiredSystems = { "SpawnManager", "GridManager", "FlowFieldManager", "CameraManager", "CutsceneManager"};
 
         Debug.Log("Waiting for all dependencies...");
         while (!AreAllSystemsReady(requiredSystems))
@@ -129,7 +119,7 @@ public class GameManager : BaseManager
         }
         else
         {
-            Debug.LogWarning("No save file, youre fucked.");
+            Debug.LogWarning("No save file.");
         }
     }
     
@@ -138,8 +128,8 @@ public class GameManager : BaseManager
         GameStateManager.Instance.SetGameState(GameState.Playing);
         EventManager.Instance.TriggerEvent("RevivePlayer");
         EventManager.Instance.TriggerEvent("EnablePlayerAbilities");
-        EventManager.Instance.TriggerEvent("EnablePlayerWeapons");
         EventManager.Instance.TriggerEvent("HideGameOverUI");
+        WeaponManager.Instance.ToggleWeaponVisibility(true);
     }
     
     private void HandlePlayerDeath()
@@ -147,8 +137,8 @@ public class GameManager : BaseManager
         GameStateManager.Instance.SetGameState(GameState.GameOver);
         EventManager.Instance.TriggerEvent("KillPlayer");
         EventManager.Instance.TriggerEvent("DisablePlayerAbilities");
-        EventManager.Instance.TriggerEvent("DisablePlayerWeapons");
         EventManager.Instance.TriggerEvent("ShowGameOverUI");
+        WeaponManager.Instance.ToggleWeaponVisibility(false);
     }
 
     private void HandleLevelUp(float currentLevel)
@@ -188,6 +178,90 @@ public class GameManager : BaseManager
     {
         dependencies.Clear();
         readySystems.Clear();
-        Debug.Log("GameManager dependencies and ready systems have been reset.");
+        Debug.LogError("GameManager dependencies and ready systems have been reset.");
+    }
+
+    public void LoadWorldItemState(WorldState state) // loading in list
+    {
+        Debug.Log($"WORLD ITEM LOAD. Count: {state.worldItemData.Count}");
+        foreach (var itemData in state.worldItemData)
+        {
+            string[] parts = itemData.Split(':');
+            
+            if (parts.Length != 4)
+            {
+                Debug.LogWarning($"Invalid world item data format: {itemData}");
+                continue;
+            }
+            
+            string type = parts[0];
+            string uniqueID = parts[1];
+            string name = parts[2];
+            Vector3 position = StringToVector3(parts[3]);
+            
+            if (type == "ITEM")
+            {
+                Debug.Log($"WORLD ITEM LOAD. Count: {state.worldItemData.Count}");
+                BaseItem baseItem = ItemDatabase.CreateItem(name);
+                baseItem.uniqueID = uniqueID;
+
+                var savedItemPayload = new ItemPayload()
+                {
+                    weaponScript = null,
+                    itemScript = baseItem,
+                    isWeapon = false
+                };
+                
+                GameObject dropPrefab = Resources.Load<GameObject>("Prefabs/ItemPrefab");
+                GameObject dropObj = Instantiate(dropPrefab, position, Quaternion.identity);
+                var dropScript = dropObj.GetComponent<ItemDrop>();
+
+                dropScript.InitializeDroppedItem(savedItemPayload);
+                ItemTracker.Instance.AssignItemToTracker(savedItemPayload, ItemLocation.World, -1, -1, dropObj);
+
+                Debug.Log($"WORLD ITEM LOAD - Item: {name} at {position}");
+            }
+            else if (type == "WEAPON")
+            {
+                WeaponInstance weaponInstance = WeaponDatabase.Instance.CreateWeaponInstance(name);
+                weaponInstance.uniqueID = uniqueID;
+
+                var savedWeaponPayload = new ItemPayload()
+                {
+                    weaponScript = weaponInstance,
+                    itemScript = null,
+                    isWeapon = true
+                };
+
+                GameObject dropPrefab = Resources.Load<GameObject>("Prefabs/ItemPrefab");
+                GameObject dropObj = Instantiate(dropPrefab, position, Quaternion.identity);
+                var dropScript = dropObj.GetComponent<ItemDrop>();
+
+                dropScript.InitializeDroppedItem(savedWeaponPayload);
+                ItemTracker.Instance.AssignItemToTracker(savedWeaponPayload, ItemLocation.World, -1, -1, dropObj);
+
+                Debug.Log($"WORLD ITEM LOAD - Weapon: {name} at {position}");
+            }
+            else
+            {
+                Debug.LogWarning($"Unknown item type '{type}' in world item data.");
+            }
+        }
+    }
+    
+    public static Vector3 StringToVector3(string s)
+    {
+        string[] parts = s.Split(',');
+        if (parts.Length != 3) return Vector3.zero;
+
+        if (float.TryParse(parts[0], out float x) &&
+            float.TryParse(parts[1], out float y) &&
+            float.TryParse(parts[2], out float z))
+        {
+            return new Vector3(x, y, z);
+        }
+
+        Debug.LogWarning($"Invalid Vector3 string: {s}");
+        return Vector3.zero;
     }
 }

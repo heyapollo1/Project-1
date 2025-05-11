@@ -24,7 +24,7 @@ public class CriticalHitDamageUpgrade : UpgradeData
         // Apply the modifier to player stats
         playerStats.ApplyModifier(criticalHitDamageModifier);
 
-        Debug.Log($"CriticalHitChance upgraded. Current CriticalHitDamage: {playerStats.GetStatValue(StatType.CriticalHitDamage, 0f)}");
+        Debug.Log($"CriticalHitChance upgraded. Current CriticalHitDamage: {playerStats.GetStatValue(StatType.CriticalHitDamage)}");
     }
 
     public override void ScaleUpgrade(AttributeManager playerStats)

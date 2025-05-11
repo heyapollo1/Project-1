@@ -20,30 +20,21 @@ public class BurnerWeapon : WeaponBase
     public Transform firePoint;
     
     private GameObject bulletProjectile;
-    //private float currentBurnChance;
     private Dictionary<StatType, float> statusEffectTriggers = new();
     private bool isFiring = false;
 
-    public override void InitializeWeapon(bool isLeftHand)
+    public override void InitializeWeapon()
     {
         Debug.Log("Initializing Burner");
-        EventManager.Instance.StartListening("CooldownComplete", CompleteCooldown);
-        this.isLeftHand = isLeftHand;
-        weaponKey = GenerateWeaponKey(isLeftHand);
-        weaponUI = LoadoutUIManager.Instance.GetActiveSlotUI(isLeftHand);
         weaponData = weaponInstance.weaponData;
-        weaponInstance.weaponData.enemyLayer = LayerMask.GetMask("Enemy");
-        bonusBurnChance = GetBurnChanceMultiplier[weaponInstance.rarity];
         weaponSpriteRenderer = GetComponent<SpriteRenderer>();
+        bonusBurnChance = GetBurnChanceMultiplier[weaponInstance.rarity];
         isAutoAiming = false;
-        if (weaponSpriteRenderer == null)
-        {
-            Debug.LogError("no spriterenderer");
-        }
         
         EventManager.Instance.TriggerEvent("ObjectPoolUpdate", "BurnerProjectile", 10);
         EventManager.Instance.TriggerEvent("FXPoolUpdate", "BurnerImpactFX", 10);
         EventManager.Instance.TriggerEvent("FXPoolUpdate", "BurningFX", 10);
+        EventManager.Instance.StartListening("CooldownComplete", CompleteCooldown);
         EventManager.Instance.StartListening("StatsChanged", UpdateWeaponStats);
 
         SetBaseStats();
@@ -70,11 +61,7 @@ public class BurnerWeapon : WeaponBase
     public override bool CanUseWeapon()
     {
         if (isOnCooldown || isFiring) return false; 
-        if (isLeftHand)
-        {
-            return Input.GetMouseButton(0);
-        }
-        return Input.GetMouseButton(1);
+        return true;
     }
 
     public override void UseWeapon()
@@ -131,13 +118,14 @@ public class BurnerWeapon : WeaponBase
 
     private void UpdateWeaponStats()
     {
-        currentDamage = playerAttributes.GetStatValue(StatType.Damage, weaponInstance.baseDamage);
-        currentRange = playerAttributes.GetStatValue(StatType.Range, weaponInstance.baseRange);
-        currentCooldownRate = playerAttributes.GetStatValue(StatType.CooldownRate, weaponInstance.baseCooldownRate);
-        currentKnockbackForce = playerAttributes.GetStatValue(StatType.KnockbackForce, weaponInstance.baseKnockbackForce);
-        currentCriticalHitChance = playerAttributes.GetStatValue(StatType.CriticalHitChance, weaponInstance.baseCriticalHitChance);
-        currentCriticalHitDamage = playerAttributes.GetStatValue(StatType.CriticalHitDamage, weaponInstance.baseCriticalHitDamage);
-        currentBurnChance = playerAttributes.GetStatValue(StatType.BurnChance, playerAttributes.baseBurnChance) + bonusBurnChance; 
+        currentDamage = weaponInstance.GetFinalStat(StatType.Damage);
+        currentRange = weaponInstance.GetFinalStat(StatType.Range);
+        currentCooldownRate = weaponInstance.GetFinalStat(StatType.CooldownRate);
+        currentKnockbackForce = weaponInstance.GetFinalStat(StatType.KnockbackForce);
+        currentCriticalHitChance = weaponInstance.GetFinalStat(StatType.CriticalHitChance);
+        currentCriticalHitDamage = weaponInstance.GetFinalStat(StatType.CriticalHitDamage);
+        currentBurnChance = weaponInstance.GetFinalStat(StatType.BurnChance) + bonusBurnChance;
+        //currentBurnChance = StatCollection.Get(StatType.BurnChance, currentBurnChance);;
         
         weaponInstance.UpdateStatTags(currentDamage, currentCooldownRate, currentRange); 
         Debug.Log($"Updating pistol stats:DMG: {weaponInstance.baseDamage}, CDR: {weaponInstance.baseCooldownRate}, Burn baby:{currentBurnChance}");

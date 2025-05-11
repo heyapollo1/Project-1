@@ -6,16 +6,21 @@ public class LoadoutUIManager : MonoBehaviour
 {
     public static LoadoutUIManager Instance { get; private set; }
     
-    [Header("Loadouts")]
-    public GameObject activeLoadoutPrefab;  
-    public GameObject storedLoadoutPrefab;
-    
     [Header("UI References")]
+    public WeaponSlotUI leftWeaponSlot;
+    public WeaponSlotUI rightWeaponSlot;
+    public ItemUI activeLeftItem;
+    public ItemUI activeRightItem;
     public Transform storedLoadoutPanel;
     
-    private List<StoredLoadoutUI> storedWeaponLoadouts = new List<StoredLoadoutUI>();
-    private Dictionary<int, StoredLoadoutUI> loadoutUIDictionary = new Dictionary<int, StoredLoadoutUI>();
-    //private Dictionary<string, WeaponSlotUI> weaponSlots = new Dictionary<string, WeaponSlotUI>();
+    [Header("Item UI Prefab")]
+    public GameObject itemUIPrefab;
+    
+    [Header("Stored Loadout Prefab")]
+    public GameObject storedLoadoutPrefab;
+
+    private Dictionary<int, StoredLoadoutUI> storedLoadoutDictionary = new Dictionary<int, StoredLoadoutUI>();
+    
     
     public void Initialize()
     {
@@ -25,139 +30,101 @@ public class LoadoutUIManager : MonoBehaviour
     private void Awake()
     {
         if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        else if (Instance != this)
+        {
+            Destroy(this);
+        }
     }
 
     public void UpdateLoadoutUI()
     {
-        Debug.Log("Updating LoadoutUI");
-        ActiveLoadoutUI activeLoadout = activeLoadoutPrefab.GetComponent<ActiveLoadoutUI>();
         foreach (Transform child in storedLoadoutPanel) Destroy(child.gameObject);
+        storedLoadoutDictionary.Clear();
         
-        activeLoadout.ClearActiveLoadout();
-        storedWeaponLoadouts.Clear();
-        loadoutUIDictionary.Clear();
+        List<PlayerLoadout> playerLoadouts = WeaponManager.Instance.GetPlayerLoadouts();
+        PlayerLoadout currentLoadout = WeaponManager.Instance.currentLoadout;
+        UpdateActiveLoadout(currentLoadout);
+        
+        foreach (var loadout in playerLoadouts) // create stored loadouts
+        {
+            if (loadout == WeaponManager.Instance.currentLoadout) continue;
             
-        List<WeaponLoadout> loadouts = WeaponManager.Instance.GetPlayerLoadouts();
-        int currentID = WeaponManager.Instance.GetCurrentLoadoutID();
-        
-        Debug.Log($"Updating Loadout no.: {currentID}");
-        if (loadouts.Count > 0)
-        {
-            Debug.Log("Updating Active loadoutUI");
-            WeaponLoadout currentLoadout = WeaponManager.Instance.GetLoadoutByID(currentID);
-            activeLoadout.UpdateActiveLoadout(currentLoadout);
-        }
-        
-        foreach (var loadout in loadouts)
-        {
-            if (loadout.loadoutID == currentID) continue;
-            Debug.Log($"Updating Stored loadoutUI {loadout.loadoutID}: {loadout}");
             GameObject storedLoadout = Instantiate(storedLoadoutPrefab, storedLoadoutPanel);
             StoredLoadoutUI storedUI = storedLoadout.GetComponent<StoredLoadoutUI>();
-            storedUI.Initialize(loadout);
-            storedWeaponLoadouts.Add(storedUI);
-            loadoutUIDictionary[loadout.loadoutID] = storedUI;
+            storedUI.UpdateStoredLoadout(loadout);
+            storedLoadoutDictionary[loadout.loadoutIndex] = storedUI;
         }
     }
     
-    public void HighlightMatchingWeapon(WeaponInstance hoveredWeapon, bool highlight)
+    public void UpdateActiveLoadout(PlayerLoadout loadout)
     {
-        if (WeaponManager.Instance.TryFindWeaponInLoadouts(hoveredWeapon, out int loadoutID, out bool isLeftHand))
+        if (loadout == null) return;
+        ClearActiveLoadout(); //remove visual objects and set null to all references
+        
+        if (!loadout.IsHandFree(true))
         {
-            if (WeaponManager.Instance.IsLoadoutActive(loadoutID))
+            if (loadout.leftHandItem == null)
             {
-                ActiveLoadoutUI activeLoadout = activeLoadoutPrefab.GetComponent<ActiveLoadoutUI>();
-                activeLoadout.HighlightSlot(hoveredWeapon, isLeftHand, highlight);
+                WeaponManager.Instance.AttachActiveWeapon(null);
+                return;
             }
-            else
+            
+            bool isWeapon = loadout.leftHandItem.isWeapon;
+            GameObject leftObj = Instantiate(itemUIPrefab, leftWeaponSlot.transform);
+            activeLeftItem = leftObj.GetComponent<ItemUI>();
+            activeLeftItem.InitializeItemUI(isWeapon ? null : loadout.leftHandItem.itemScript, isWeapon ? loadout.leftHandItem.weaponScript : null, true);
+            leftWeaponSlot.AssignItemToLoadoutSlot(activeLeftItem, isWeapon);
+            WeaponManager.Instance.AttachActiveWeapon(isWeapon ? loadout.leftHandItem.weaponScript.weaponBase : null, true);
+        }
+        
+        if (!loadout.IsHandFree(false))
+        {
+            if (loadout.rightHandItem == null)
             {
-                StoredLoadoutUI storedUI = GetStoredLoadoutUIByID(loadoutID);
-                storedUI?.HighlightSlot(hoveredWeapon, isLeftHand, highlight);
+                WeaponManager.Instance.AttachActiveWeapon(null);
+                return;
             }
+            
+            bool isWeapon = loadout.rightHandItem.isWeapon;
+            GameObject rightObj = Instantiate(itemUIPrefab, rightWeaponSlot.transform);
+            activeRightItem = rightObj.GetComponent<ItemUI>();
+            activeRightItem.InitializeItemUI(isWeapon ? null : loadout.rightHandItem.itemScript, isWeapon ? loadout.rightHandItem.weaponScript : null, true);
+            rightWeaponSlot.AssignItemToLoadoutSlot(activeRightItem, isWeapon);
+            WeaponManager.Instance.AttachActiveWeapon(isWeapon ? loadout.rightHandItem.weaponScript.weaponBase : null);
         }
     }
     
-    public ActiveWeaponUI GetActiveSlotUI(bool isLeftHand)
+    public void ClearActiveLoadout()
     {
-        ActiveLoadoutUI activeLoadout = activeLoadoutPrefab.GetComponent<ActiveLoadoutUI>();
-        return isLeftHand ? activeLoadout.GetLeftWeaponUI() : activeLoadout.GetRightWeaponUI();
+        if (activeLeftItem != null)
+        {
+            Destroy(activeLeftItem.gameObject);
+            leftWeaponSlot.SetEmpty();
+            activeLeftItem = null;
+        }
+
+        if (activeRightItem != null)
+        {
+            Destroy(activeRightItem.gameObject);
+            rightWeaponSlot.SetEmpty();
+            activeRightItem = null;
+        }
+    }
+    
+    public void HighlightSlot(bool isLeftHand, bool active)
+    {
+        if (isLeftHand && activeLeftItem != null)
+        {
+            activeLeftItem.HighlightSlot(active);
+        }
+        else if (!isLeftHand && activeRightItem != null)
+        {
+            activeRightItem.HighlightSlot(active);
+        }
     }
     
     public StoredLoadoutUI GetStoredLoadoutUIByID(int id)
     {
-        return loadoutUIDictionary.TryGetValue(id, out var ui) ? ui : null;
+        return storedLoadoutDictionary.TryGetValue(id, out var ui) ? ui : null;
     }
-    
-    public void UpgradeWeaponInActiveLoadout(bool isLeftHand)
-    {
-        ActiveLoadoutUI activeLoadout = activeLoadoutPrefab.GetComponent<ActiveLoadoutUI>();
-        activeLoadout.UpgradeActiveWeapons(isLeftHand);
-    }
-    
-    public void UpgradeWeaponInStoredLoadout(int loadoutID, bool isLeftHand)
-    {
-        StoredLoadoutUI storedUI = GetStoredLoadoutUIByID(loadoutID);
-        storedUI?.UpgradeWeaponInStoredLoadout(isLeftHand);
-        UpdateLoadoutUI();
-    }
-    
-    /*private void CreateWeaponSlotUI(WeaponInstance weapon, bool isLeftHand, int loadoutIndex)
-   {
-       //GameObject weaponSlot = Instantiate(weaponSlotPrefab, currentLoadoutPanel);
-       //WeaponSlotUI slotUI = weaponSlot.GetComponent<WeaponSlotUI>();
-       ActiveLoadoutUI activeLoadout = activeLoadoutPrefab.GetComponent<ActiveLoadoutUI>();
-       string weaponKey = GenerateWeaponKey(loadoutIndex, isLeftHand, weapon?.weaponTitle ?? "Empty");
-       RegisterWeaponKey(weaponKey, weapon);
-
-       Debug.Log($"Storing active weapon: {weaponKey}");
-       if (weapon != null)
-       {
-           activeLoadout.Initialize();
-       }
-       //activeWeapons.Add();
-       activeLoadout.transform.SetSiblingIndex(isLeftHand ? 0 : 1);
-   }*/
-
-    /*public string GenerateWeaponKey(int loadoutIndex, bool isLeftHand, string weaponTitle)
-    {
-        return $"Loadout{loadoutIndex}_{(isLeftHand ? "L" : "R")}_{weaponTitle}";
-    }
-    
-    public void RegisterWeaponKey(string weaponKey, WeaponInstance weapon)
-    {
-        if (!weaponSlots.ContainsKey(weaponKey))
-        {
-            Debug.Log($"Registering new weapon key: {weaponKey}");
-            WeaponSlotUI slot = GetWeaponSlot(weaponKey);
-            weaponSlots[weaponKey] = slot;
-        }
-    }
-    
-    public void RemoveWeaponKey(string weaponKey)
-    {
-        if (weaponSlots.ContainsKey(weaponKey))
-        {
-            Debug.Log($"Removing old weapon key: {weaponKey}");
-            weaponSlots.Remove(weaponKey);
-        }
-    }
-
-    public WeaponSlotUI GetWeaponSlot(string weaponKey)
-    {
-        return weaponSlots.ContainsKey(weaponKey) ? weaponSlots[weaponKey] : null;
-    }
-    
-    public StoredWeaponUI GetStoredWeaponSlot(string weaponKey)
-    {
-        foreach (StoredLoadoutUI loadout in storedWeaponLoadouts)
-        {
-            StoredWeaponUI weaponUI = loadout.GetStoredWeaponUI(weaponKey);
-            if (weaponUI != null)
-            {
-                return weaponUI;
-            }
-        }
-        return null; 
-    }*/
 }

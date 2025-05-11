@@ -24,7 +24,7 @@ public class MovementSpeedUpgrade : UpgradeData
         // Apply the modifier to player stats
         playerStats.ApplyModifier(movementSpeedModifier);
 
-        Debug.Log($"MovementSpeed upgraded. Current Movespeed: {playerStats.GetStatValue(StatType.MovementSpeed, 1f)}");
+        Debug.Log($"MovementSpeed upgraded. Current Movespeed: {playerStats.GetStatValue(StatType.MovementSpeed)}");
     }
 
     public override void ScaleUpgrade(AttributeManager playerStats)

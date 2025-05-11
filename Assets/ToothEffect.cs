@@ -18,7 +18,7 @@ public class ToothEffect : ICombatEffect
     {
         var modifiers = new List<StatModifier>();
         if (context.target.TryGetComponent(out EnemyHealthManager enemyHealth) &&
-            enemyHealth.HasStatusEffect<BleedingEffect>())
+            enemyHealth.HasStatusEffect<BurningEffect>())
         {
             modifiers.Add(new StatModifier(StatType.Damage, 0f, toothDamageIncrease));
         }

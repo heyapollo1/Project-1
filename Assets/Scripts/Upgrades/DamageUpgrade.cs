@@ -24,7 +24,7 @@ public class DamageUpgrade : UpgradeData
         // Apply the modifier to player stats
         playerStats.ApplyModifier(damageModifier);
 
-        Debug.Log($"CriticalHitChance upgraded. Current CriticalHitChance: {playerStats.GetStatValue(StatType.CriticalHitChance, 1f)}");
+        Debug.Log($"CriticalHitChance upgraded. Current CriticalHitChance: {playerStats.GetStatValue(StatType.Damage)}");
     }
 
     public override void ScaleUpgrade(AttributeManager playerStats)

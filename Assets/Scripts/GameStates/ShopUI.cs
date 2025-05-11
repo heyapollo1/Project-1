@@ -12,11 +12,11 @@ public class ShopUI : MonoBehaviour
     public Button closeShopButton;             // Button to close the shop
     public Button rerollButton;
 
-    private ShopManager shopManager;           // Reference to the ShopManager
+    private ShopEncounter shopEncounter;           // Reference to the ShopManager
 
-    public void Initialize(ShopManager manager)
+    public void Initialize(ShopEncounter manager)
     {
-        shopManager = manager;
+        shopEncounter = manager;
         shopPanel.SetActive(false);
         closeShopButton.onClick.AddListener(CloseShop);
         rerollButton.onClick.AddListener(RerollItems);
@@ -63,7 +63,7 @@ public class ShopUI : MonoBehaviour
 
     private void CreateShopItemCard(BaseItem item)
     {
-        GameObject itemCard = Instantiate(shopManager.shopItemCardPrefab, shopItemContainer);
+        GameObject itemCard = Instantiate(shopEncounter.shopItemCardPrefab, shopItemContainer);
 
         var itemNameText = itemCard.transform.Find("ItemTitle")?.GetComponent<TextMeshProUGUI>();
         var itemIconImage = itemCard.transform.Find("ItemIcon")?.GetComponent<Image>();

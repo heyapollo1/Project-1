@@ -23,7 +23,7 @@ public class ArmourUpgrade : UpgradeData
 
         playerStats.ApplyModifier(armourModifier);
 
-        Debug.Log($"AreaSize upgraded. Current AreaSize: {playerStats.GetStatValue(StatType.AreaSize, 1f)}");
+        Debug.Log($"AreaSize upgraded. Current AreaSize: {playerStats.GetStatValue(StatType.AreaSize)}");
     }
 
     public override void ScaleUpgrade(AttributeManager playerStats)

@@ -20,19 +20,18 @@ public class LoadingMenu : MonoBehaviour
 
     public void ShowLoadingScreen()
     {
-        Debug.LogWarning("load show");
+        //Debug.LogWarning("load show");
         loadingScreen.SetActive(true);
     }
 
     public void HideLoadingScreen()
     {
-        Debug.LogWarning("load hide");
         loadingScreen.SetActive(false);
     }
 
     public void UpdateProgress(float progress)
     {
-        Debug.LogWarning("progress load");
+        //Debug.LogWarning("progress load");
         if (progressBar != null)
         {
             progressBar.value = progress;

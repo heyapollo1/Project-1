@@ -162,16 +162,13 @@ public class FXManager : BaseManager
         if (HasPool(fxName))
         {
             ExpandPool(fxName, initialPoolSize);
-            Debug.Log($"HEY CUNt< {fxName} is already in the FX pool.");
             return;
         }
 
         GameObject fxPrefab = Resources.Load<GameObject>($"FX/{fxName}");
         if (fxPrefab != null)
         {
-            Debug.Log($"HEY CUNT{fxPrefab.name} FX pool created");
             CreatePool(fxName, fxPrefab, initialPoolSize);
-            Debug.Log($"HEY CUNT{fxName} FX pool created");
         }
         else
         {
@@ -186,11 +183,8 @@ public class FXManager : BaseManager
 
     public GameObject PlayFX(string fxName, Vector3 position)
     {
-        //ExpandPool(fxName, 2);
         if (!fxPools.ContainsKey(fxName))
         {
-            Debug.LogWarning($"FX pool for '{fxName}' not found. Creating new pool.");
-            //CreatePool(fxName, position, fxPools.Count);
             ExpandPool(fxName, 2);
         }
         
@@ -202,16 +196,25 @@ public class FXManager : BaseManager
             {
                 fxInstance.SetActive(true);
                 fxInstance.transform.position = position;
+                fxInstance.transform.localScale = Vector3.one;
                 return fxInstance;
             }
-            else
-            {
-                ExpandPool(fxName, 2);
-                Debug.LogError($"FX instance from '{fxName}' pool is null!");
-            }
+            ExpandPool(fxName, 2);
+            Debug.LogError($"FX instance from '{fxName}' pool is null!");
         }
         else
         {
+            ExpandPool(fxName, 5);
+            //GameObject fxInstance = pool.Dequeue();
+
+            if (fxPools.TryGetValue(fxName, out Queue<GameObject> updatedPool) && updatedPool.Count > 0)
+            {
+                GameObject fxInstance = updatedPool.Dequeue();
+                fxInstance.SetActive(true);
+                fxInstance.transform.position = position;
+                fxInstance.transform.localScale = Vector3.one;
+                return fxInstance;
+            }
             Debug.LogError($"Failed to retrieve FX from pool: '{fxName}' even after expansion.");
         }
         return null;
@@ -240,6 +243,7 @@ public class FXManager : BaseManager
 
             for (int i = 0; i < additionalSize; i++)
             {
+                Debug.LogWarning($"Expanding pool by {additionalSize}");
                 GameObject fxInstance = Instantiate(fxPrefab, transform);
                 fxInstance.SetActive(false);
 

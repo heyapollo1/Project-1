@@ -7,7 +7,6 @@ public interface ICombatEffect
     void OnHit(CombatContext context);
     void OnHurt(float currentHealth, float maxHealth);
     void OnEnemyKilled(GameObject enemy, AttributeManager playerStats);
-    //float ModifyStats(StatModifier stats, CombatContext context);
     List<StatModifier> ModifyStats(CombatContext context)
     {
         return null;

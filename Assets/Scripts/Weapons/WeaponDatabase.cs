@@ -8,13 +8,11 @@ public class WeaponDatabase : BaseManager
     public static WeaponDatabase Instance { get; private set; }
     public override int Priority => 30;
 
-    public List<WeaponBase> weaponPrefabs = new List<WeaponBase>();
     public List<WeaponData> weaponDataList = new List<WeaponData>();
-    private HashSet<string> activeWeapons= new HashSet<string>();
 
     protected override void OnInitialize()
     {
-        LoadWeapons();
+        LoadWeaponsIntoDatabase();
     }
 
     void Awake()
@@ -25,26 +23,23 @@ public class WeaponDatabase : BaseManager
 
     void Start()
     {
-        foreach (var prefab in weaponPrefabs)
+        foreach (var weapon in weaponDataList)
         {
-            Debug.Log($"Prefab in list: {prefab.name}");
+            Debug.Log($"Added Weapon to Databse: {weapon.weaponTitle}");
         }
     }
 
-    private void LoadWeapons()
+    private void LoadWeaponsIntoDatabase()
     {
-        weaponPrefabs.Clear();
         weaponDataList.Clear();
 
         GameObject[] loadedPrefabs = Resources.LoadAll<GameObject>("Weapons");
-
         foreach (var prefab in loadedPrefabs)
         {
             WeaponBase weapon = prefab.GetComponent<WeaponBase>();
 
             if (weapon != null && weapon.weaponData != null) 
             {
-                weaponPrefabs.Add(weapon);
                 weaponDataList.Add(weapon.weaponData);
                 Debug.Log($"weapon: {weapon.weaponData.weaponTitle}");
             }
@@ -55,12 +50,9 @@ public class WeaponDatabase : BaseManager
         }
     }
     
-    public WeaponInstance GetRandomWeapon(StageBracket bracket)
+    public WeaponInstance CreateRandomWeapon(StageBracket bracket)
     {
-        Rarity rolledRarity = RollRarity(bracket);
-        Rarity weaponDefaultRarity;
         List<WeaponData> eligibleWeapons = new List<WeaponData>(weaponDataList);
-        
         string randomWeaponName;
         WeaponData selectedWeapon = null;
         int attempts = 0;
@@ -78,65 +70,21 @@ public class WeaponDatabase : BaseManager
             int randomIndex = Random.Range(0, eligibleWeapons.Count);
             selectedWeapon = eligibleWeapons[randomIndex];
             randomWeaponName = selectedWeapon.weaponTitle;
-            weaponDefaultRarity = selectedWeapon.defaultRarity;
-            Debug.Log($"Attempt {attempts}: Weapon {selectedWeapon.weaponTitle} is already owned! Trying a new one...");
-            if (!activeWeapons.Contains(selectedWeapon.weaponTitle) && IsWeaponAllowed(randomWeaponName, weaponDefaultRarity, rolledRarity))
+            Debug.Log($"Attempt {attempts}: Weapon {selectedWeapon.weaponTitle} already exists! Trying a new one...");
+            if (!ItemTracker.Instance.DoesItemExist(randomWeaponName))
             {
                 break; // Found a valid weapon, exit loop
             }
         }
         while (true);
         
-        if (WeaponManager.Instance.HasWeapon(randomWeaponName))
-        {
-            Rarity? playerRarity = WeaponManager.Instance.GetOwnedWeaponRarity(randomWeaponName);
-            rolledRarity = playerRarity.Value;
-        }
-        else
-        {
-            Debug.LogWarning($"{selectedWeapon.weaponTitle}, rarity: ({selectedWeapon.defaultRarity}) is not owned by player");
-        }
-        
-        WeaponInstance rolledWeapon = new WeaponInstance(selectedWeapon, rolledRarity);
-        activeWeapons.Add(rolledWeapon.weaponTitle);
-
-        Debug.Log($"Weapon: {rolledWeapon.weaponTitle} ({rolledRarity})");
+        WeaponInstance rolledWeapon = new WeaponInstance(selectedWeapon);
+        Debug.Log($"Weapon: {rolledWeapon.weaponTitle}");
         return rolledWeapon;
     }
-    
-    private bool IsWeaponAllowed(string weaponName, Rarity weaponDefaultRarity, Rarity rolledRarity)
-    {
-        if (rolledRarity < weaponDefaultRarity)
-        {
-            Debug.LogWarning($"{weaponName}: Default Rarity ({weaponDefaultRarity}) is higher than rolled rarity ({rolledRarity}).");
-            return false;
-        }
-        Debug.LogWarning($"{weaponName} found, accessing..");
-        return true;
-    }
-    
-    private Rarity RollRarity(StageBracket bracket)
-    {
-        Debug.LogWarning("Rolling weapon rarity...");
-        Dictionary<Rarity, float> chances = RarityChances.GetRarityBracketChances(bracket);
-        float randomValue = Random.value;
-        float cumulativeProbability = 0f;
 
-        foreach (var rarityChance in chances)
-        {
-            cumulativeProbability += rarityChance.Value;
-            if (randomValue <= cumulativeProbability)
-            {
-                return rarityChance.Key;
-            }
-        }
-        Debug.LogWarning("Rarity roll failed, defaulting to Bronze.");
-        return Rarity.Common;
-    }
-
-    public WeaponInstance CreateWeaponInstance(string weaponName, Rarity rarity)
+    public WeaponInstance CreateWeaponInstance(string weaponName)
     {
-        Debug.Log($"🔎 Searching for weapon: {weaponName}");
         WeaponData weaponData = GetWeaponDataByName(weaponName);
         if (weaponData == null)
         {
@@ -144,7 +92,7 @@ public class WeaponDatabase : BaseManager
             return null;
         }
         Debug.Log($" weapon: {weaponData.weaponTitle}. Creating instance...");
-        WeaponInstance weaponInstance = new WeaponInstance(weaponData, rarity);
+        WeaponInstance weaponInstance = new WeaponInstance(weaponData);
         if (weaponInstance.weaponPrefab == null)
         {
             Debug.LogError($"ERROR: WeaponInstance prefab is NULL after creation for {weaponInstance.weaponTitle}!");
@@ -156,34 +104,9 @@ public class WeaponDatabase : BaseManager
     {
         foreach (var weapon in weaponDataList)
         {
-            if (weapon.weaponTitle == weaponName)
-            {
-                return weapon;
-            }
+            if (weapon.weaponTitle == weaponName) return weapon;
         }
         Debug.LogWarning($"Weapon '{weaponName}' not found in the database.");
         return null;
     }
-    
-    public void RegisterActiveWeapon(string weaponName)
-    {
-        if (!activeWeapons.Contains(weaponName))
-        {
-            activeWeapons.Add(weaponName);
-        }
-    }
-    
-    public void UnregisterActiveWeapon(string weaponName)
-    {
-        if (activeWeapons.Contains(weaponName))
-        {
-            activeWeapons.Remove(weaponName);
-        }
-    }
-
-    public List<string> GetActiveWeaponNames()
-    {
-        return activeWeapons.ToList();
-    }
-   
 }

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6168803740586544378}
   - component: {fileID: 4666009005122555344}
   m_Layer: 0
-  m_Name: BombAoEIndicator
+  m_Name: Wall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

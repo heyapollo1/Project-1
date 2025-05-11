@@ -26,27 +26,23 @@ public class CustomSceneManager : BaseManager
         // Only pass the selected save data if it's a gameplay scene
         if (sceneName == "GameScene" && selectedSave == null && !isNewGame)
         {
-            Debug.LogWarning("Attempted to load GameScene without save data. Creating new game data.");
+            Debug.Log("Attempted to load GameScene without save data. Creating new game data.");
             selectedSave = new GameData();
         }
-        
         StartCoroutine(LoadSceneWithTransition(sceneName, selectedSave, isNewGame));
     }
 
     private IEnumerator LoadSceneWithTransition(string targetScene, GameData selectedSave, bool isNewGame)
     {
         LoadingMenu.Instance.ShowLoadingScreen();
-
         if (LoadingMenu.Instance != null)
         {
             LoadingMenu.Instance.UpdateProgress(0);
         }
-
         EventManager.Instance.TriggerEvent("SceneUnloaded", currentScene);
-
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(targetScene);
         asyncLoad.allowSceneActivation = false;
-
+        
         while (asyncLoad.progress < 0.9f)
         {
             if (LoadingMenu.Instance != null)
@@ -55,11 +51,9 @@ public class CustomSceneManager : BaseManager
             }
             yield return null;
         }
-
         asyncLoad.allowSceneActivation = true;
         yield return new WaitUntil(() => asyncLoad.isDone);
         yield return new WaitForEndOfFrame();
-
         currentScene = targetScene;
 
         if (targetScene == "GameScene")
@@ -78,16 +72,16 @@ public class CustomSceneManager : BaseManager
         {
             EventManager.Instance.TriggerEvent("SceneLoaded", targetScene);
         }
-        
+        //Debug.LogError("Waiting for dpendencies.");
         yield return new WaitUntil(() => asyncLoad.isDone);
-        
         if (SceneManager.GetSceneByName(targetScene).isLoaded)
         {
             Debug.Log($"Loaded scene: {targetScene}");
             LoadingMenu.Instance.HideLoadingScreen();
         }
     }
-    public string CurrentScene => currentScene;
+    //public string CurrentScene => currentScene;
+    
     /*private IEnumerator LoadSceneWithTransition(string targetScene)
     {
         if (!string.IsNullOrEmpty(currentScene))

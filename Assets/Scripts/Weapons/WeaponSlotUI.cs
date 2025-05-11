@@ -1,16 +1,16 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.UI;
-using TMPro;
 
 public class WeaponSlotUI : MonoBehaviour, IDropHandler
 {
-    [HideInInspector]public ActiveWeaponUI equippedWeapon;
-    public bool isLeftSlot;
+    [HideInInspector]public ItemUI slottedItem;
+    public bool isWeapon;
+    public bool isLeftHand;
+    public int loadoutID;
     
     public bool IsFilled()
     {
-        if (equippedWeapon == null)
+        if (slottedItem == null)
         {
             Debug.Log($"Fail");
             return false;
@@ -18,56 +18,80 @@ public class WeaponSlotUI : MonoBehaviour, IDropHandler
         return true;
     }
     
-    public void AssignWeaponUI(ActiveWeaponUI weaponUI)
+    public void AssignItemToLoadoutSlot(ItemUI item, bool itemIsWeapon)
     {
-        equippedWeapon = weaponUI;
+        Debug.Log($"Slotted {item.name}, {(itemIsWeapon ? "is weapon":"is item")}");
+        slottedItem = item;
+        isWeapon = itemIsWeapon;
     }
     
-    public void ClearWeaponUI()
+    public void SetEmpty()
     {
-        equippedWeapon = null;
+        slottedItem = null;
     }
     
-    public void OnDrop(PointerEventData eventData)
+    
+     public void OnDrop(PointerEventData eventData)
     {
-        Debug.Log("WeaponSlotUI received drop");
+        if (ItemUI.draggedItem == null) return;
+        WeaponSlotUI targetSlot = this;
+       bool sourceIsWeapon = ItemUI.draggedItem.isWeapon;
+       bool sourceIsFromInventory = !ItemUI.draggedItem.isInHand;
+           
+       WeaponInstance sourceWeaponInstance = sourceIsWeapon ? ItemUI.draggedItem?.assignedWeapon : null;
+       BaseItem sourceBaseItem = sourceIsWeapon ?  null : ItemUI.draggedItem?.assignedItem;
 
-        if (ActiveWeaponUI.draggedWeapon == null) return;
-        
-        WeaponSlotUI sourceSlot = ActiveWeaponUI.draggedWeapon.originalParent.GetComponent<WeaponSlotUI>();
-        
-        WeaponInstance sourceWeapon = sourceSlot.equippedWeapon?.assignedWeapon;
-        WeaponInstance targetWeapon = equippedWeapon?.assignedWeapon;
-        
-        bool isTargetLeftHand = isLeftSlot;
-        bool isSourceLeftHand = sourceSlot.isLeftSlot;
-        if (sourceSlot == null) return;
-        if (targetWeapon == sourceWeapon) return;
-        
-        if (IsFilled())
+       WeaponInstance targetWeaponInstance = isWeapon ? targetSlot.slottedItem?.assignedWeapon : null;
+       BaseItem targetBaseItem = isWeapon ? null : targetSlot.slottedItem?.assignedItem;
+       
+       //Debug.Log($"[OnDrop] DraggedItem assignedWeapon: {ItemUI.draggedItem?.assignedWeapon.weaponTitle}");
+       //Debug.Log($"[OnDrop] DraggedItem assignedItem: {ItemUI.draggedItem?.assignedItem.itemName}");
+       //Debug.Log($"[OnDrop] slottedItem.assignedWeapon: {targetSlot.slottedItem?.assignedWeapon.weaponTitle}");
+       //Debug.Log($"[OnDrop] slottedItem.assignedItem: {targetSlot.slottedItem?.assignedItem.itemName}");
+           
+       var payload = new UISwapPayload
+       {
+           sourceItem = new ItemPayload(){
+                weaponScript = sourceWeaponInstance,
+                itemScript = sourceBaseItem,
+                isWeapon = sourceIsWeapon},
+           
+           targetItem = new ItemPayload(){
+               weaponScript = targetWeaponInstance,
+               itemScript = targetBaseItem,
+               isWeapon = isWeapon},
+       };
+       
+        if (!sourceIsFromInventory)
         {
-            if (targetWeapon.weaponBase != null && (targetWeapon.weaponBase.isWeaponDisabled() || targetWeapon.weaponBase.isWeaponOnCooldown()))
+            ItemUI.successfulSwap = false;
+            if (targetSlot == ItemUI.draggedItem.originalHandSlot) return;
+        }
+
+        if (targetSlot.IsFilled())
+        {
+            if (isWeapon)
             {
-                Debug.Log("Drop denied - Target weapon is disabled or on cooldown.");
-                ActiveWeaponUI.successfulSwap = false;
-                return;
+                WeaponInstance targetWeapon = slottedItem.assignedWeapon;
+                if (targetWeapon.weaponBase != null && (targetWeapon.weaponBase.IsWeaponDisabled() || targetWeapon.weaponBase.isWeaponOnCooldown()))
+                {
+                    Debug.Log("Drop denied - Target weapon is disabled or on cooldown.");
+                    ItemUI.successfulSwap = false;
+                    return;
+                }
             }
-            AssignWeaponUI(sourceSlot.equippedWeapon);
-            sourceSlot.AssignWeaponUI(equippedWeapon);
-            ActiveWeaponUI.successfulSwap = true;
-            WeaponManager.Instance.SwapWeaponHands(sourceWeapon, targetWeapon, isSourceLeftHand, isTargetLeftHand);
+            
+            Debug.LogWarning($"source is going to {(isLeftHand ? "LEFT" : "RIGHT")}");
+            ItemUI.successfulSwap = true;
+            UIManager.Instance.SetDragging(false);
+            WeaponManager.Instance.HandleLoadoutPayload(payload, isLeftHand, sourceIsFromInventory);
         }
         else
         {
-            AssignWeaponUI(sourceSlot.equippedWeapon);
-            sourceSlot.ClearWeaponUI();
-            ActiveWeaponUI.successfulSwap = true;
-            Debug.Log($"MOVE: {sourceWeapon.weaponTitle} → {(isTargetLeftHand ? "LEFT" : "RIGHT")} hand");
-            WeaponManager.Instance.PlaceWeaponInEmptyHand(sourceWeapon, isTargetLeftHand);
-            return;
+            Debug.Log($"Trying to move to hand empty space from {(!sourceIsFromInventory ? "HAND":"INVENTORY")}. ");
+            ItemUI.successfulSwap = true;
+            UIManager.Instance.SetDragging(false);
+            WeaponManager.Instance.HandleLoadoutPayload(payload, isLeftHand, sourceIsFromInventory, true);
         }
-
-        Debug.Log("Not even close");
-        ActiveWeaponUI.successfulSwap = false;
     }
 }

@@ -5,7 +5,6 @@ using Unity.Cinemachine;
 public class SceneInitializer : MonoBehaviour
 {
     [Header("Scene Managers")]
-    public ShopManager shopManager;
     public HubManager hubManager;
     public SpawnManager spawnManager;
     public GridManager gridManager; // Single GridManager handles all grids
@@ -17,6 +16,10 @@ public class SceneInitializer : MonoBehaviour
     public TransitionManager transitionManager;
     public EnemyManager enemyManager;
     public StatusEffectManager statusEffectManager;
+    
+    [Header("Encounter Managers")]
+    public ShopEncounter shopEncounter;
+    public TreasureEncounter treasureEncounter;
     
     [Header("Scene UI")]
     public StageUI stageUI;
@@ -46,10 +49,32 @@ public class SceneInitializer : MonoBehaviour
         if (scene == "GameScene")
         {
             InitializeSceneManagers();
+            InitializeEncounterManagers();
             AssignEssentials();
         }
     }
 
+    private void InitializeEncounterManagers()
+    {
+        if (shopEncounter != null)
+        {
+            shopEncounter.InitializeEncounter();
+        }
+        else
+        {
+            Debug.LogWarning("shopEncounter fail.");
+        } 
+        
+        if (treasureEncounter != null)
+        {
+            treasureEncounter.InitializeEncounter();
+        }
+        else
+        {
+            Debug.LogWarning("shopEncounter fail.");
+        } 
+    }
+    
     private void InitializeSceneManagers()
     {
         if (gridManager != null)
@@ -59,15 +84,6 @@ public class SceneInitializer : MonoBehaviour
         else
         {
             Debug.LogWarning("gridManager fail.");
-        }
-
-        if (shopManager != null)
-        {
-            shopManager.Initialize();
-        }
-        else
-        {
-            Debug.LogWarning("shopManager fail.");
         }
         
         if (hubManager != null)
@@ -99,7 +115,7 @@ public class SceneInitializer : MonoBehaviour
         
         if (encounterManager != null)
         {
-            encounterManager.Initialize();
+            //encounterManager.Initialize();
         }
         else
         {
@@ -197,15 +213,6 @@ public class SceneInitializer : MonoBehaviour
         else
         {
             Debug.LogWarning("stageUI fail.");
-        }
-
-        if (transitionManager != null)
-        {
-            transitionManager.Initialize();
-        }
-        else
-        {
-            Debug.LogWarning("transitionManager fail.");
         }
         
         if (loadoutUIManager != null)

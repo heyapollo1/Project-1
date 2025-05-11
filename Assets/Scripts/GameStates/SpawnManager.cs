@@ -30,15 +30,12 @@ public class SpawnManager : MonoBehaviour
     public void Initialize()
     {
         GameManager.Instance.RegisterDependency("SpawnManager", this);
-
         EventManager.Instance.StartListening("UpdateWave", UpdateWaveSettings);
         EventManager.Instance.StartListening("UpdateBossWave", UpdateBossWaveSettings);
-
         poolManager = EnemyPoolManager.Instance;
-        player = PlayerManager.Instance.playerInstance?.transform;
+        player = PlayerController.Instance.GetPlayerTransform();
 
         GameManager.Instance.MarkSystemReady("SpawnManager");
-
         Debug.Log("SpawnManager initialized.");
     }
 
@@ -50,7 +47,7 @@ public class SpawnManager : MonoBehaviour
     
     public void UpdateWaveSettings(WaveSettings wave)
     {
-        Debug.LogWarning($"updated spawn Enemies..");
+        Debug.LogWarning("updated spawn Enemies..");
         spawnInterval = wave.spawnInterval;
         enemiesPerSpawn = wave.enemiesPerSpawn;
         
@@ -65,13 +62,12 @@ public class SpawnManager : MonoBehaviour
             stageActive = true;
             EventManager.Instance.TriggerEvent("StartStageTimer");
         }
-        
         yield return new WaitForSeconds(delay);
 
-        StartCoroutine(SpawnEnemies());
+        StartCoroutine(StartSpawningWave());
     }
 
-    private IEnumerator SpawnEnemies()
+    private IEnumerator StartSpawningWave()
     {
         Debug.LogWarning("Spawning Enemies...");
         float elapsedTime = 0f;

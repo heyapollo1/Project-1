@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class DodgeManager : MonoBehaviour
@@ -41,10 +40,9 @@ public class DodgeManager : MonoBehaviour
     {
         Vector2 dodgeDirection = player.moveDirection.normalized;
         player.gameObject.layer = LayerMask.NameToLayer("Dodge"); 
-
         player.rb.velocity = dodgeDirection * dodgeSpeed;
-        PlayerHealthManager.Instance.StartInvincibility(0.3f);
         
+        PlayerHealthManager.Instance.StartInvincibility(0.3f);
         yield return new WaitForSeconds(0.3f);
         
         player.rb.velocity = Vector2.zero;

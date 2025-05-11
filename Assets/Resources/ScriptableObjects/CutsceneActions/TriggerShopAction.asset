@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c903c24ea58f48469125b202f614327, type: 3}
   m_Name: TriggerShopAction
   m_EditorClassIdentifier: 
-  eventName: EnterEncounter
-  encounter: {fileID: 11400000, guid: 858ef52a3cf3c40c08c00f1ad933f11f, type: 2}
-  isEncounterEvent: 1
+  eventName: TriggerEncounter
+  eventStringParameter: ShopEncounter
+  hasStringParameter: 1

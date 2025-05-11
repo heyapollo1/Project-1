@@ -22,22 +22,19 @@ MonoBehaviour:
     - waveNumber: 1
       spawnInterval: 0.2
       enemiesPerSpawn: 1
-      enemyRequirements:
+      enemyPayload:
       - enemyPrefab: {fileID: 8209470775787424774, guid: 50bf7c0ab20ce4c108577b7f83212f05, type: 3}
         enemyType: DogEnemy
-        spawnWeight: 80
-      - enemyPrefab: {fileID: 8209470775787424774, guid: 9501700f006f6486690ff672c07b9e40, type: 3}
-        enemyType: BaseEnemy
-        spawnWeight: 20
+        spawnWeight: 100
   - stageNumber: 2
     isBossStage: 0
     wavesInStage:
     - waveNumber: 1
       spawnInterval: 0.2
       enemiesPerSpawn: 1
-      enemyRequirements:
-      - enemyPrefab: {fileID: 8209470775787424774, guid: 93a2a01318fc84a4889bc9b3ea6be02b, type: 3}
-        enemyType: BoomerEnemy
+      enemyPayload:
+      - enemyPrefab: {fileID: 8209470775787424774, guid: 50bf7c0ab20ce4c108577b7f83212f05, type: 3}
+        enemyType: DogEnemy
         spawnWeight: 100
   - stageNumber: 2
     isBossStage: 1
@@ -45,7 +42,7 @@ MonoBehaviour:
     - waveNumber: 1
       spawnInterval: 1
       enemiesPerSpawn: 1
-      enemyRequirements:
+      enemyPayload:
       - enemyPrefab: {fileID: 8968712868362914031, guid: a177c6ded80f848478644bce5dea3b49, type: 3}
         enemyType: BossEnemy
         spawnWeight: 100

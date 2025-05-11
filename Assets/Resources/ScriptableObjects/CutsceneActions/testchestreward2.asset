@@ -13,8 +13,23 @@ MonoBehaviour:
   m_Name: testchestreward2
   m_EditorClassIdentifier: 
   chestPrefab: {fileID: 5667670271133929025, guid: 93bff49644eb442228efd1fcc8e6dec9, type: 3}
-  rewardName: Burner
-  rarity: 0
-  isItem: 0
-  isWeapon: 1
   spawnPosition: {x: 305, y: 0, z: 0}
+  rewardDefinitions:
+  - rewardType: 1
+    rewardName: Uzi
+    rarity: 0
+  - rewardType: 0
+    rewardName: Mad Dog
+    rarity: 2
+  - rewardType: 0
+    rewardName: Full Metal Jacket
+    rarity: 0
+  - rewardType: 0
+    rewardName: Axe
+    rarity: 1
+  - rewardType: 0
+    rewardName: Witch Point
+    rarity: 2
+  - rewardType: 0
+    rewardName: Topaz
+    rarity: 2

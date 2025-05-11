@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponTitle: Shotgun
   weaponDescription: Suck on these nuts!
   baseDamage: 50
-  baseCooldownRate: 0.6
+  baseCooldownRate: 2
   baseRange: 5
   baseKnockbackForce: 0
   baseCriticalHitChance: 0
@@ -36,29 +36,22 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 8
-  defaultRarity: 0
+  rarity: 0
   rarityUpgrades:
   - rarityTier: 0
     additionalDamage: 0
     cooldownReduction: 0
     rangeIncrease: 0
-    uniqueAttributes: []
   - rarityTier: 1
     additionalDamage: 5
     cooldownReduction: 0
     rangeIncrease: 5
-    uniqueAttributes: []
   - rarityTier: 2
     additionalDamage: 10
     cooldownReduction: 0
     rangeIncrease: 10
-    uniqueAttributes: []
   - rarityTier: 3
     additionalDamage: 15
     cooldownReduction: 0
     rangeIncrease: 15
-    uniqueAttributes: []
   associatedTags: 03000000
-  references:
-    version: 2
-    RefIds: []

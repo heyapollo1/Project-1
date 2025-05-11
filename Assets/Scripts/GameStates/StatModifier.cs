@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class StatModifier
 {
-    public StatType statType;   // The type of stat this modifier affects
+    public StatType statType;   
     public float flatBonus;     // Flat bonus (e.g., +10 damage)
     public float percentBonus;  // Percentage bonus (e.g., +20% attack speed)
     public float duration;      // Optional duration (for temporary buffs)

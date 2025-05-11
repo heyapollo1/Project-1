@@ -5016,8 +5016,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 52421491
+  m_SortingLayer: -1
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 49a2654c413804447b7b00c02d617f74, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -10159,6 +10159,7 @@ GameObject:
   - component: {fileID: -7886444547746905946}
   - component: {fileID: 3024124826483934099}
   - component: {fileID: 6625298653970603163}
+  - component: {fileID: 5456073792313519201}
   m_Layer: 0
   m_Name: ItemPrefab
   m_TagString: Untagged
@@ -10197,13 +10198,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b5e9af339b5c4b1b8f1e5f3465e09e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  dropPayload:
+    isWeapon: 0
   itemRarityVisual: {fileID: 3024124826483934099}
-  itemPriceTag: {fileID: 6887796590317879157}
+  rarity: 0
+  name: 
+  uniqueID: 
+  value: 0
+  priceTag: {fileID: 6887796590317879157}
   upgradeableFX: {fileID: 1616469537884225564}
   landingFX: {fileID: 5639866333680174721}
-  itemSprite: {fileID: 8093453644970985433}
+  spriteRenderer: {fileID: 8093453644970985433}
   priceText: {fileID: 32950243291303265}
-  eligibleForUpgrade: 0
+  detectionRadius: 1
+  isWeapon: 0
 --- !u!114 &3024124826483934099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10253,3 +10261,16 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 1.25
+--- !u!114 &5456073792313519201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7522962785941789512}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88d2bf2ba4b94410f935fb5790ba307e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sortingLayerOffset: 0

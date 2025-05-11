@@ -13,3 +13,5 @@ MonoBehaviour:
   m_Name: PrepEncounterAction
   m_EditorClassIdentifier: 
   eventName: PrepareEncounter
+  encounter: {fileID: 11400000, guid: 858ef52a3cf3c40c08c00f1ad933f11f, type: 2}
+  isEncounterEvent: 0

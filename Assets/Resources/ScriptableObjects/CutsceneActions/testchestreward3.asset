@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: testchestreward3
   m_EditorClassIdentifier: 
   chestPrefab: {fileID: 5667670271133929025, guid: 93bff49644eb442228efd1fcc8e6dec9, type: 3}
-  rewardName: Burner
-  rarity: 0
-  isItem: 0
-  isWeapon: 1
   spawnPosition: {x: 296, y: 0, z: 0}
+  rewardDefinitions:
+  - rewardType: 0
+    rewardName: Axe
+    rarity: 1
+  - rewardType: 0
+    rewardName: Ghost Wind
+    rarity: 1

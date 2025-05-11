@@ -34,7 +34,8 @@ public class Gold : MonoBehaviour, IPullable
                 AudioManager.TriggerSound(clipPrefix: "Pickup_Gold", position: playerTransform.position);
                 GameObject goldPickupFX = FXManager.Instance.PlayFX("GoldPickupFX", playerTransform.position);
                 goldPickupFX.transform.SetParent(playerTransform);
-                goldPickupFX.transform.localPosition = new Vector3(0f, -0.3f, 0f);
+                goldPickupFX.transform.localPosition = new Vector3(0f, -0.5f, 0f);
+                goldPickupFX.transform.transform.localScale = Vector3.one;
 
                 ObjectPoolManager.Instance.ReturnToPool(gameObject);
             }

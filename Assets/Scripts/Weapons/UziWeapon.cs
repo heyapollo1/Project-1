@@ -12,23 +12,14 @@ public class UziWeapon : WeaponBase
     private GameObject bulletProjectile;
     private bool isFiring = false;
 
-    public override void InitializeWeapon(bool isLeftHand)
+    public override void InitializeWeapon()
     {
         Debug.Log("Initializing Uzi");
-        EventManager.Instance.StartListening("CooldownComplete", CompleteCooldown);
-        this.isLeftHand = isLeftHand;
-        weaponKey = GenerateWeaponKey(isLeftHand);
-        weaponUI = LoadoutUIManager.Instance.GetActiveSlotUI(isLeftHand);
         weaponData = weaponInstance.weaponData;
-        weaponInstance.weaponData.enemyLayer = LayerMask.GetMask("Enemy");
         weaponSpriteRenderer = GetComponent<SpriteRenderer>();
         isAutoAiming = false;
-        
-        if (weaponSpriteRenderer == null)
-        {
-            Debug.LogError("no spriterenderer");
-        }
-        
+
+        EventManager.Instance.StartListening("CooldownComplete", CompleteCooldown);
         EventManager.Instance.StartListening("StatsChanged", UpdateWeaponStats);
 
         SetBaseStats();
@@ -53,11 +44,7 @@ public class UziWeapon : WeaponBase
     public override bool CanUseWeapon()
     {
         if (isOnCooldown || isFiring) return false; 
-        if (isLeftHand)
-        {
-            return Input.GetMouseButton(0);
-        }
-        return Input.GetMouseButton(1);
+        return true;
     }
 
     public override void UseWeapon()
@@ -113,11 +100,12 @@ public class UziWeapon : WeaponBase
 
     private void UpdateWeaponStats()
     {
-        currentDamage = playerAttributes.GetStatValue(StatType.Damage, weaponInstance.baseDamage);
-        currentRange = playerAttributes.GetStatValue(StatType.Range, weaponInstance.baseRange);
-        currentCooldownRate = playerAttributes.GetStatValue(StatType.CooldownRate, weaponInstance.baseCooldownRate);
-        currentCriticalHitChance = playerAttributes.GetStatValue(StatType.CriticalHitChance, weaponInstance.baseCriticalHitChance);
-        currentCriticalHitDamage = playerAttributes.GetStatValue(StatType.CriticalHitDamage, weaponInstance.baseCriticalHitDamage);
+        currentDamage = weaponInstance.GetFinalStat(StatType.Damage);
+        currentRange = weaponInstance.GetFinalStat(StatType.Range);
+        currentCooldownRate = weaponInstance.GetFinalStat(StatType.CooldownRate);
+        currentKnockbackForce = weaponInstance.GetFinalStat(StatType.KnockbackForce);
+        currentCriticalHitChance = weaponInstance.GetFinalStat(StatType.CriticalHitChance);
+        currentCriticalHitDamage = weaponInstance.GetFinalStat(StatType.CriticalHitDamage);
 
         weaponInstance.UpdateStatTags(currentDamage, currentCooldownRate, currentRange); //UI
         Debug.Log($"Updating pistol stats:DMG: {weaponInstance.baseDamage}, CDR: {weaponInstance.baseCooldownRate}, RNG:{weaponInstance.baseRange}");

@@ -80,8 +80,6 @@ public class FlowFieldManager : MonoBehaviour
 
     private void SetActiveFlowField(SceneGrid newActiveGrid)
     {
-        //if (newActiveGrid == activeGrid) return;
-
         activeGrid = newActiveGrid;
 
         if (flowFields.TryGetValue(activeGrid, out var newFlowField))

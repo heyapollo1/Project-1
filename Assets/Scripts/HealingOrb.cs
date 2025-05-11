@@ -37,7 +37,8 @@ public class HealingOrb : MonoBehaviour, IPullable
                 if (healingFX != null)
                 {
                     healingFX.transform.SetParent(playerTransform);
-                    healingFX.transform.localPosition = new Vector3(0f, -0.5f, 0f);
+                    healingFX.transform.localPosition = new Vector3(0f, -0.3f, 0f);
+                    healingFX.transform.transform.localScale = Vector3.one;
                 }
 
                 ObjectPoolManager.Instance.ReturnToPool(gameObject);

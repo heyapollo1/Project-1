@@ -93,7 +93,7 @@ public class PlayerHealthManager : MonoBehaviour, ILivingEntity
     public void TakeDamage(float damage,  Vector2 knockbackDirection, float knockbackForce, DamageSource sourceType = DamageSource.Enemy, bool isCriticalHit = false)
     {
         if (playerIsDead || isInvincible) return;
-        if (playerAttributes.IsDodgeSuccessful(playerAttributes.currentDodgeChance)) 
+        if (playerAttributes.ShouldTrigger(playerAttributes.currentDodgeChance)) 
         {
             Debug.Log("Attack dodged!");
             return;
@@ -106,7 +106,6 @@ public class PlayerHealthManager : MonoBehaviour, ILivingEntity
         switch (sourceType)
         {
             case DamageSource.Enemy:
-                //PlayerCombat.Instance.HandleOnHit(gameObject, totalDamage);
                 ShowDamageNumber(totalDamage, isCriticalHit ? Color.yellow : Color.white, isCriticalHit ? 15f : 12f);
                 break;
             case DamageSource.StatusEffect:
@@ -175,7 +174,7 @@ public class PlayerHealthManager : MonoBehaviour, ILivingEntity
     {
         float previousMaxHealth = maxHealth;
 
-        maxHealth = playerAttributes.GetStatValue(StatType.MaxHealth, playerAttributes.baseMaxHealth);
+        maxHealth = playerAttributes.GetStatValue(StatType.MaxHealth);
 
         currentHealth = Mathf.Round(currentHealth * (maxHealth / previousMaxHealth));
 

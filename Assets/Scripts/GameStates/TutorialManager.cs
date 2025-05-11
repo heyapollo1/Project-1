@@ -24,6 +24,7 @@ public class TutorialManager : MonoBehaviour
 
     public void StartTutorialIntro(Transform introCameraPosition)
     {
+        Debug.Log("Starting Tutorial Intro");
         EventManager.Instance.TriggerEvent("HideUI");
         CutsceneManager.Instance.StartCutscene("IntroCutscene", introCameraPosition);
     }
@@ -41,7 +42,6 @@ public class TutorialManager : MonoBehaviour
     public void TutorialWeaponAcquired()
     {
         if (weaponAcquired) return;
-        Debug.Log("tutorial weapon continue");
         weaponAcquired = true;
         DialogueManager.Instance.TriggerDialogue(firstWeaponDialogue, OnFirstWeaponDialogueFinished);
     }

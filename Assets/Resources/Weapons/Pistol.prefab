@@ -28,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 1.025, y: 0, z: 0}
-  m_LocalScale: {x: 0.9, y: 0.9, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8262825234808258814}
@@ -102,15 +102,21 @@ MonoBehaviour:
   weaponSpriteRenderer: {fileID: 8545743623625905194}
   enemyDetector: {fileID: 0}
   playerController: {fileID: 0}
-  playerStats: {fileID: 0}
+  playerAttributes: {fileID: 0}
   equippedLocation: {fileID: 0}
   lockedAimDirection: {x: 0, y: 0}
+  classTags: 
+  currentDamage: 0
+  currentCooldownRate: 0
+  currentRange: 0
+  currentKnockbackForce: 0
+  currentCriticalHitChance: 0
+  currentCriticalHitDamage: 0
   isAutoAiming: 0
-  eligibleTarget: 0
   projectileSpeed: 15
-  burstDelay: 0.15
   projectileSpread: 5
   firePoint: {fileID: 8262825234808258814}
+  bulletProjectile: {fileID: 0}
 --- !u!1 &6244789293775430569
 GameObject:
   m_ObjectHideFlags: 0

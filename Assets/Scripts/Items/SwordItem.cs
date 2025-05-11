@@ -4,7 +4,22 @@ using UnityEngine;
 
 public class SwordItem : BaseItem
 {
-    private static readonly Dictionary<Rarity, List<StatModifier>> rarityModifiers = new()
+    private float damageBonus;
+    
+    public SwordItem(Sprite swordIcon, Rarity rarity) : base(
+        "Sword", swordIcon, 50, ItemType.Inventory, rarity,
+        new List<StatModifier> {new (StatType.Damage, 10f)})
+    {
+        damageBonus = 10f;
+        UpdateDescription();
+    }
+    
+    public override string UpdateDescription()
+    {
+        return  description = $"Increase base damage by {damageBonus}.";
+    }
+    
+    /*private static readonly Dictionary<Rarity, List<StatModifier>> rarityModifiers = new()
     {
         { Rarity.Common, new List<StatModifier> { new (StatType.Damage, 5f) } },
         { Rarity.Rare, new List<StatModifier> { new (StatType.Damage, 10f) } },
@@ -13,7 +28,7 @@ public class SwordItem : BaseItem
     };
     
     public SwordItem(Sprite swordIcon, Rarity rarity) : base(
-        "Sword", swordIcon, 50, ItemType.Simple, rarity,
+        "Sword", swordIcon, 50, ItemType.Inventory, rarity,
         rarityModifiers[rarity])
     {
         UpdateDescription();
@@ -57,5 +72,5 @@ public class SwordItem : BaseItem
         }
 
         return  description = $"Increase damage by {currentBonus}%{upgradePart}.";
-    }
+    }*/
 }

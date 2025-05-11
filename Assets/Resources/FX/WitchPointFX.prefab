@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1426497557923254459}
   - component: {fileID: -3705971474879034094}
   m_Layer: 0
-  m_Name: CurseFX
+  m_Name: WitchPointFX
   m_TagString: FX
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

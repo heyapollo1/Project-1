@@ -24,7 +24,7 @@ public class BurstFireUpgrade : UpgradeData
         // Apply the modifier to player stats
         playerStats.ApplyModifier(burstFireModifier);
 
-        Debug.Log($"CriticalHitChance upgraded. BurstFire: {playerStats.GetStatValue(StatType.BurstFire, 1f)}");
+        Debug.Log($"CriticalHitChance upgraded. BurstFire: {playerStats.GetStatValue(StatType.BurstFire)}");
     }
 
     public override void ScaleUpgrade(AttributeManager playerStats)

@@ -55,41 +55,34 @@ public class TooltipManager : MonoBehaviour
         HideTooltip();
     }
     
-    public void SetWorldTooltip(IInteractable obj, string tooltipType, bool isUpgrade = false)
+    public void SetWorldTooltip(IInteractable obj, string tooltipType)
     {
         if (activeHoverTooltip != null) return;
-        //Debug.Log($"Setting Weapon tooltip for {tooltipType}");
         activeWorldTooltip = obj;
-        CheckTooltipType(obj, tooltipType, isUpgrade);
+        CheckTooltipType(obj, tooltipType);
     }
     
     public void ClearWorldTooltip()
     {
-        //Debug.Log($"Clearing World tooltip");
         activeWorldTooltip = null;
         HideTooltip();
     }
     
-    public void SetHoverTooltip(IInteractable obj, string tooltipType, bool isUpgrade = false)
+    public void SetHoverTooltip(IInteractable obj, string tooltipType)
     {
-        if (activeWorldTooltip != null)
+        if (isWorldTooltipActive())
         {
-            //Debug.Log("Hiding, override world tooltip");
-            HideTooltip(); // This hides any active world tooltip
+            HideTooltip();
         }
-        //Debug.Log("Triggering hover tooltip");
+        
         activeHoverTooltip = obj;
-        CheckTooltipType(obj, tooltipType, isUpgrade);
+        CheckTooltipType(obj, tooltipType);
     }
     
     public void ClearHoverTooltip()
     {
-        if (activeHoverTooltip != null)
-        {
-            activeHoverTooltip = null;
-            HideTooltip();
-            PlayerItemDetector.Instance.UpdateTooltip();
-        }
+        activeHoverTooltip = null;
+        HideTooltip();
     }
 
     public IInteractable GetActiveTooltip()
@@ -100,7 +93,12 @@ public class TooltipManager : MonoBehaviour
         {
             return activeWorldTooltip;
         }
-        return null; // No valid tooltip available
+        return null;
+    }
+    
+    public bool isWorldTooltipActive()
+    { 
+        return activeWorldTooltip != null;
     }
     
     public bool isHoverTooltipActive()
@@ -108,50 +106,25 @@ public class TooltipManager : MonoBehaviour
        return activeHoverTooltip != null;
     }
     
-    public void CheckTooltipType(IInteractable tooltipObject, string tooltipType, bool isUpgrade)
+    public void CheckTooltipType(IInteractable tooltipObject, string tooltipType)
     {
         if (tooltipObject == null)  return;
 
-        tooltipBackgroundImage.material = isUpgrade ? upgradeMaterial : defaultMaterial;
+        //tooltipBackgroundImage.material = isUpgrade ? upgradeMaterial : defaultMaterial;
 
         switch (tooltipType)
         {
-            case "Weapon":
-                WeaponDrop weaponDrop = tooltipObject as WeaponDrop;
-                if (weaponDrop != null && weaponDrop.weapon != null)
-                {
-                    //Debug.Log($"Showing Weapon tooltip for {weaponDrop.weapon.weaponTitle}");
-                    ShowWeaponTooltip(weaponDrop.weapon, isUpgrade);
-                }
-                break;
-            case "Item":
+            case "ItemDrop":
                 ItemDrop itemDrop = tooltipObject as ItemDrop;
-                if (itemDrop != null)
-                {
-                    //Debug.Log($"Showing Item tooltip for {itemDrop.item}");
-                    ShowItemTooltip(itemDrop.item, isUpgrade);
-                }
+                if (itemDrop != null) ShowItemDropTooltip(itemDrop, itemDrop.isWeapon);
                 break;
-            case "WeaponSlot":
-                ActiveWeaponUI weaponUI = tooltipObject as ActiveWeaponUI;
-                if (weaponUI != null && weaponUI.assignedWeapon != null)
-                {
-                    //Debug.Log($"Showing Weapon tooltip for {weaponUI.assignedWeapon.weaponTitle}");
-                    ShowWeaponTooltip(weaponUI.assignedWeapon);
-                }
-                break;
-            case "ItemSlot":
-                InventoryItemUI itemUI = tooltipObject as InventoryItemUI;
-                if (itemUI != null)
-                {
-                    //Debug.Log($"Showing Item tooltip for {itemUI.assignedItem}");
-                    ShowItemTooltip(itemUI.assignedItem);
-                }
+            case "ItemUI":
+                ItemUI itemUI = tooltipObject as ItemUI;
+                if (itemUI != null) ShowItemUITooltip(itemUI, itemUI.isWeapon);
                 break;
             case "Default":
                 //Debug.Log($"Showing default tooltip");
-                IDefaultTooltipData defaultData = tooltipObject as IDefaultTooltipData;
-                if (defaultData != null)
+                if (tooltipObject is IDefaultTooltipData defaultData)
                 {
                     ShowDefaultTooltip(defaultData);
                 }
@@ -159,7 +132,7 @@ public class TooltipManager : MonoBehaviour
         }
     }
     
-    public void ShowWeaponTooltip(WeaponInstance weapon, bool isUpgrade = false)
+    public void ShowItemDropTooltip(ItemDrop item, bool isWeapon, bool isUpgrade = false)
     {
         tooltipPanel.SetActive(true);
         mainPanelIcon.SetActive(true);
@@ -167,55 +140,64 @@ public class TooltipManager : MonoBehaviour
             StopCoroutine(updateCoroutine);
         updateCoroutine = StartCoroutine(UpdateLayoutOverTime());
         
-        titleText.text = weapon.weaponTitle;
-        descriptionText.text = weapon.weaponDescription;
-        iconImage.sprite = weapon.weaponIcon;
-        valueText.text = weapon.value.ToString();
-        uiRarityVisual.ApplyUIRarityVisual(weapon.rarity);
-            
-        ClearClassTags();
-        ClearStatTags();
-        
-        if (EncounterManager.Instance.CheckIfEncounterActive())
-        {
-            valueTag.SetActive(true);
-        }
-        
-        mainTag.GetComponentInChildren<TextMeshProUGUI>().text = "Weapon";
-        mainTag.SetActive(true);
-        
-        UpdateClassTags(weapon.classTags);
-        ApplyStatTagUI(damageTag, damgeText, weapon.statTags["DMG"]);
-        ApplyStatTagUI(cooldownTag, cooldownText, weapon.statTags["SPD"], true);
-        ApplyStatTagUI(rangeTag, rangeText, weapon.statTags["RNG"]);
-    }
-    
-    public void ShowItemTooltip(BaseItem item, bool isUpgrade = false)
-    {
-        tooltipPanel.SetActive(true);
-        mainPanelIcon.SetActive(true);
-        if (updateCoroutine != null) 
-            StopCoroutine(updateCoroutine);
-        updateCoroutine = StartCoroutine(UpdateLayoutOverTime());
-        
-        titleText.text = item.itemName;
-        iconImage.sprite = item.icon;
+        titleText.text = item.name;
+        iconImage.sprite = item.spriteRenderer.sprite;
         valueText.text = item.value.ToString();
-        descriptionText.text = item.UpdateDescription(isUpgrade);
-        uiRarityVisual.ApplyUIRarityVisual(item.currentRarity);
-        
+        uiRarityVisual.ApplyUIRarityVisual(item.rarity);
+        descriptionText.text = isWeapon ?  item.dropPayload.weaponScript.weaponDescription : item.dropPayload.itemScript.description;
         ClearClassTags();
         ClearStatTags();
         
-        if (EncounterManager.Instance.CheckIfEncounterActive())
+        if (EncounterManager.Instance.IsEncounterActive())
         {
             valueTag.SetActive(true);
         }
         
-        mainTag.GetComponentInChildren<TextMeshProUGUI>().text = "Item";
+        mainTag.GetComponentInChildren<TextMeshProUGUI>().text = isWeapon ? "Weapon" : "Item";
         mainTag.SetActive(true);
         
-        UpdateClassTags(item.classTags);
+        UpdateClassTags(isWeapon ? item.dropPayload.weaponScript.classTags : item.dropPayload.itemScript.classTags);
+
+        if (isWeapon)
+        {
+            ApplyStatTagUI(damageTag, damgeText, item.dropPayload.weaponScript.statTags["DMG"]);
+            ApplyStatTagUI(cooldownTag, cooldownText, item.dropPayload.weaponScript.statTags["SPD"], true);
+            ApplyStatTagUI(rangeTag, rangeText, item.dropPayload.weaponScript.statTags["RNG"]);
+        }
+    }
+
+    public void ShowItemUITooltip(ItemUI item, bool isWeapon, bool isUpgrade = false)
+    {
+        tooltipPanel.SetActive(true);
+        mainPanelIcon.SetActive(true);
+        if (updateCoroutine != null) 
+            StopCoroutine(updateCoroutine);
+        updateCoroutine = StartCoroutine(UpdateLayoutOverTime());
+        
+        titleText.text = item.name;
+        iconImage.sprite = item.icon.sprite;
+        valueText.text = item.value.ToString();
+        uiRarityVisual.ApplyUIRarityVisual(item.rarity);
+        descriptionText.text = isWeapon ?  item.assignedWeapon.weaponDescription : item.assignedItem.UpdateDescription();
+        ClearClassTags();
+        ClearStatTags();
+        
+        if (EncounterManager.Instance.IsEncounterActive())
+        {
+            valueTag.SetActive(true);
+        }
+        
+        mainTag.GetComponentInChildren<TextMeshProUGUI>().text = isWeapon ? "Weapon" : "Item";
+        mainTag.SetActive(true);
+        
+        UpdateClassTags(isWeapon ? item.assignedWeapon.classTags : item.assignedItem.classTags);
+
+        if (isWeapon)
+        {
+            ApplyStatTagUI(damageTag, damgeText, item.assignedWeapon.statTags["DMG"]);
+            ApplyStatTagUI(cooldownTag, cooldownText, item.assignedWeapon.statTags["SPD"], true);
+            ApplyStatTagUI(rangeTag, rangeText, item.assignedWeapon.statTags["RNG"]);
+        }
     }
     
     public void ShowDefaultTooltip(IDefaultTooltipData data)
@@ -237,8 +219,6 @@ public class TooltipManager : MonoBehaviour
             uiRarityVisual.ApplyDefaultVisual();
         }
         
-        //classTagContainer.gameObject.SetActive(false);
-        //statTagContainer.gameObject.SetActive(false);
         ClearClassTags();
         ClearStatTags();
         mainTag.SetActive(false);
@@ -246,14 +226,12 @@ public class TooltipManager : MonoBehaviour
     
     public void HideTooltip()
     {
-        //Debug.Log($"Hiding tooltip");
         ClearClassTags();
         ClearStatTags();
     
         titleText.text = "";
         descriptionText.text = "";
         iconImage.sprite = null;
-        
         tooltipPanel.SetActive(false);
     }
     

@@ -1,8 +1,6 @@
-using System;
-using System.Collections;
+/*using System.Collections;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Rendering.HighDefinition;
 
 public class WeaponDrop : MonoBehaviour, IInteractable
 {
@@ -23,7 +21,8 @@ public class WeaponDrop : MonoBehaviour, IInteractable
     private bool isAcquired = false;
     private bool tooltipActive = false;
     private bool isShopItem = false;
-    public bool eligibleForUpgrade = false;
+    public bool eligibleForInventoryUpgrade = false;
+    public bool eligibleForLoadoutUpgrade = false;
 
     public LayerMask playerLayer;
 
@@ -43,41 +42,14 @@ public class WeaponDrop : MonoBehaviour, IInteractable
         transform.SetParent(null);
         transform.localScale = Vector3.one;
         weaponRarityVisual.ApplyRarityMaterial(newWeapon.rarity);
-        EventManager.Instance.StartListening("WeaponInteraction", CheckForUpgrade);
+        //EventManager.Instance.StartListening("WeaponInteraction", CheckForUpgrade);
 
         CheckForUpgrade(weapon.weaponTitle);
-       // StartCoroutine(DelayedCheck());
     }
 
     private void OnDestroy()
     {
-        EventManager.Instance.StopListening("WeaponInteraction", CheckForUpgrade);
-    }
-
-    private IEnumerator DelayedCheck()
-    {
-        yield return new WaitForSeconds(0.05f);
-        if (IsPlayerNearby())
-        {
-            if (!tooltipActive)
-            {
-                if (isShopItem)
-                {
-                    ShowPriceTag();
-                }
-                if (eligibleForUpgrade)
-                {
-                    Debug.Log("Turning ON upgrade.");
-                    LoadoutUIManager.Instance.HighlightMatchingWeapon(weapon, true);
-                }
-                tooltipActive = true;
-                PlayerItemDetector.Instance.AddInteractableItem(this);
-            }
-        }
-        else
-        {
-            Debug.Log($"[Delayed] Player is NOT nearby: {IsPlayerNearby()}");
-        }
+        EventManager.Instance.StopListening("ItemInteraction", CheckForUpgrade);
     }
     
     private bool IsPlayerNearby()
@@ -86,10 +58,8 @@ public class WeaponDrop : MonoBehaviour, IInteractable
 
         if (player != null)
         {
-            //Debug.Log($"Detected Player: {player.gameObject.name}");
             return true;
         }
-        //Debug.Log("No player detected nearby.");
         return false;
     }
     
@@ -100,12 +70,26 @@ public class WeaponDrop : MonoBehaviour, IInteractable
         {
             if (WeaponManager.Instance.HasWeapon(weaponName))
             {
-                eligibleForUpgrade = true;
-                upgradeableFX.gameObject.SetActive(true);
+                Rarity weaponRarity = WeaponManager.Instance.GetOwnedItemRarity(weaponName, true);
+                if (weapon.rarity == weaponRarity)
+                { 
+                    eligibleForLoadoutUpgrade = true;
+                    upgradeableFX.gameObject.SetActive(true);
+                }
+            }
+            else if (InventoryManager.Instance.HasItem(weaponName))
+            {
+                Rarity itemRarity = InventoryManager.Instance.GetOwnedItemRarity(weaponName);
+                if (weapon.rarity == itemRarity)
+                {
+                    eligibleForInventoryUpgrade = true;
+                    upgradeableFX.gameObject.SetActive(true);
+                }
             }
             else
             {
-                eligibleForUpgrade = false;
+                eligibleForInventoryUpgrade = false;
+                eligibleForLoadoutUpgrade = false;
                 upgradeableFX.gameObject.SetActive(false);
             }
         }
@@ -113,18 +97,15 @@ public class WeaponDrop : MonoBehaviour, IInteractable
     
     private void Update()
     {
+        if(isAcquired) return;
         if (tooltipActive || !isAcquired)
         {
             if (!IsPlayerNearby())
             {
-                if (isShopItem)
-                {
-                    HidePriceTag();
-                }
-                if (eligibleForUpgrade)
-                {
-                    LoadoutUIManager.Instance.HighlightMatchingWeapon(weapon, false);
-                }
+                if (isShopItem) HidePriceTag();
+                if (eligibleForInventoryUpgrade) InventoryUI.Instance.HighlightInventoryMatch(weapon.weaponTitle, true, false);
+                else if (eligibleForLoadoutUpgrade) LoadoutUIManager.Instance.HighlightLoadoutMatch(weapon.weaponTitle, true, false);
+                
                 if (PlayerItemDetector.Instance.isInteractable(this))
                 {
                     PlayerItemDetector.Instance.RemoveInteractableItem(this);
@@ -142,6 +123,11 @@ public class WeaponDrop : MonoBehaviour, IInteractable
     public void DropWeaponReward(WeaponInstance weapon, Transform spawnPoint)
     {
         StartCoroutine(HandleWeaponDrop(weapon, spawnPoint));
+    }
+
+    private bool WillUpgrade()
+    {
+        return eligibleForInventoryUpgrade || eligibleForLoadoutUpgrade;
     }
 
     private IEnumerator HandleWeaponDrop(WeaponInstance newWeapon, Transform spawnPoint)
@@ -176,28 +162,20 @@ public class WeaponDrop : MonoBehaviour, IInteractable
         Debug.Log($"Interacting...{tooltipActive}, {isInitialized}");
         if (!isAcquired && isInitialized)
         {
-            Debug.Log("Interacting...");
-            if (isShopItem)
-            {
-                TryBuyWeapon();
-            }
-            else
-            {
-                PickUpWeapon();
-            }
+            PickUpWeapon();
         }
     }
     
     public void ShowTooltip()
     {
         if (!isInitialized) return;
-        Debug.Log("Entering space...");
-        TooltipManager.Instance.SetWorldTooltip(this, "Weapon", eligibleForUpgrade);
+        //Debug.Log("Entering space...");
+        TooltipManager.Instance.SetWorldTooltip(this, "Weapon", WillUpgrade());
     }
     
     public void HideTooltip()
     {
-        LoadoutUIManager.Instance.HighlightMatchingWeapon(weapon, false);
+        if (!isAcquired && !tooltipActive && weapon != null) LoadoutUIManager.Instance.HighlightLoadoutMatch(weapon.weaponTitle, true, false);
         TooltipManager.Instance.ClearWorldTooltip();
     }
     
@@ -205,18 +183,15 @@ public class WeaponDrop : MonoBehaviour, IInteractable
     {
         if (!tooltipActive && collision.CompareTag("Player"))
         {
-            Debug.Log("Entering space...");
             if (isShopItem)
             {
                 ShowPriceTag();
             }
-            if (eligibleForUpgrade)
+            if (WillUpgrade())
             {
-                //Debug.Log("Turning ON upgrade.");
-                LoadoutUIManager.Instance.HighlightMatchingWeapon(weapon, true);
+                LoadoutUIManager.Instance.HighlightLoadoutMatch(weapon.weaponTitle, true, true);
             }
             tooltipActive = true;
-            Debug.Log("Entering space...");
             PlayerItemDetector.Instance.AddInteractableItem(this);
         }
     }
@@ -230,9 +205,9 @@ public class WeaponDrop : MonoBehaviour, IInteractable
             {
                 HidePriceTag();
             }
-            if (eligibleForUpgrade)
+            if (WillUpgrade())
             {
-                LoadoutUIManager.Instance.HighlightMatchingWeapon(weapon, false);
+                LoadoutUIManager.Instance.HighlightLoadoutMatch(weapon.weaponTitle, true, false);
             }
             PlayerItemDetector.Instance.RemoveInteractableItem(this);
         }
@@ -241,55 +216,52 @@ public class WeaponDrop : MonoBehaviour, IInteractable
     public void PickUpWeapon()
     {
         if (isAcquired) return;
-        if (!WeaponManager.Instance.IsThereSpaceForWeapons())
+        
+        bool toLoadout;
+        if (WeaponManager.Instance.isThereSpaceInLoadouts() || eligibleForLoadoutUpgrade) toLoadout = true;
+        else if (InventoryManager.Instance.isThereSpaceInInventory() || eligibleForInventoryUpgrade) toLoadout = false;
+        else return;
+        
+        Debug.Log($"Send to loadout? {toLoadout}");
+        if (isShopItem)
         {
-            Debug.Log("Not enough weapon space.");
-            return;
+            if (!ResourceManager.Instance.HasEnoughFunds(weapon.value))
+            {
+                Debug.Log("Not enough funds to buy weapon.");
+                return;
+            }
+            Debug.Log($"Item '{weapon.weaponTitle}' successfully bought.");
+            ResourceManager.Instance.SpendCurrency(weapon.value);
+            AudioManager.Instance.PlayUISound("Shop_Purchase");
+        }
+        else
+        {
+            Debug.Log($"Item '{weapon.weaponTitle}' successfully picked up.");
+            AudioManager.Instance.PlayUISound("Item_PickUp");
+        }
+
+        if (toLoadout)
+        {
+            Debug.Log("Sending Weapon to Loadout");
+            WeaponManager.Instance.AddWeaponToLoadout(weapon, WillUpgrade());
+        }
+        else
+        {
+            Debug.Log("Sending Weapon to Inventory");
+            InventoryManager.Instance.AddWeaponToInventory(weapon, WillUpgrade());
         }
         
-        //Debug.Log($"Picked up {weapon.weaponTitle}!");
-        AudioManager.Instance.PlayUISound("Item_PickUp");
-        WeaponManager.Instance.AcquireWeapon(weapon, eligibleForUpgrade);
         WeaponDatabase.Instance.UnregisterActiveWeapon(weapon.weaponTitle);
-        LoadoutUIManager.Instance.HighlightMatchingWeapon(weapon, false);
+        LoadoutUIManager.Instance.HighlightLoadoutMatch(weapon.weaponTitle, true, false);
         PlayerItemDetector.Instance.RemoveInteractableItem(this);
-        //TooltipManager.Instance.HideTooltip();
         isAcquired = true;
-        Debug.Log($"Picked up {weapon.weaponTitle}!");
+        
         if (TutorialManager.Instance.IsTutorialActive() && !TutorialManager.Instance.hasPickedUpTutorialWeapon)
         {
             TutorialManager.Instance.TutorialWeaponAcquired();
         }
+        
         StartCoroutine(BounceAndDisappearCoroutine());
-    }
-
-    public bool TryBuyWeapon()
-    {
-        if (isAcquired) return false;
-        isAcquired = true;
-        if (!ResourceManager.Instance.HasEnoughFunds(weapon.value))
-        {
-            Debug.Log("Not enough funds to buy item.");
-            return false;
-        }
-
-        if (!InventoryManager.Instance.DoesInventoryHaveSpace())
-        {
-            Debug.Log("Not enough inventory space.");
-            return false;
-        }
-
-        Debug.Log($"Item '{weapon.weaponTitle}' successfully bought.");
-        AudioManager.Instance.PlayUISound("Shop_Purchase");
-        TooltipManager.Instance.HideTooltip();
-        ResourceManager.Instance.SpendCurrency(weapon.value);
-        WeaponManager.Instance.AcquireWeapon(weapon, eligibleForUpgrade);
-        WeaponDatabase.Instance.UnregisterActiveWeapon(weapon.weaponTitle);
-        LoadoutUIManager.Instance.HighlightMatchingWeapon(weapon, false);
-        PlayerItemDetector.Instance.RemoveInteractableItem(this);
-
-        StartCoroutine(BounceAndDisappearCoroutine());
-        return true;
     }
 
     private void ShowPriceTag()
@@ -354,4 +326,4 @@ public class WeaponDrop : MonoBehaviour, IInteractable
         text.alpha = fadeIn ? 1f : 0f;
         text.transform.localPosition = targetPosition;
     }
-}
+}*/

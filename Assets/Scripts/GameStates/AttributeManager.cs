@@ -8,11 +8,11 @@ public enum StatType
     Damage,
     MaxHealth,
     CooldownRate,
+    Range,
     MovementSpeed,
     CriticalHitChance,
     CriticalHitDamage,
     KnockbackForce,
-    Range,
     AreaSize,
     BurstFire,
     DodgeChance,
@@ -20,24 +20,17 @@ public enum StatType
     BleedChance,
     BurnChance,
     StunChance,
-    Whirlwind,
-    CleaveSize,
-    Scorch,
-    Zap_ChainLightning
 }
 
 public class AttributeManager : MonoBehaviour
 {
     public static AttributeManager Instance;
-
-    private Dictionary<StatType, float> flatBonuses = new Dictionary<StatType, float>();
-    private Dictionary<StatType, float> percentBonuses = new Dictionary<StatType, float>();
-
-    private float minCooldownValue = 0.1f;
-
+    
     public float baseMaxHealth = 100f;
     public float baseMoveSpeed = 4f;
     public float baseDamage = 0f;
+    public float baseCooldownRate = 0f;
+    public float baseRange = 0f;
     public float baseCriticalHitChance = 0f;
     public float baseCriticalHitDamage = 0f;
     public float baseKnockbackForce = 0f;
@@ -50,6 +43,8 @@ public class AttributeManager : MonoBehaviour
     [HideInInspector] public float currentDamage;
     [HideInInspector] public float currentMaxHealth;
     [HideInInspector] public float currentMoveSpeed;
+    [HideInInspector] public float currentCooldownRate;
+    [HideInInspector] public float currentRange;
     [HideInInspector] public float currentCriticalHitChance;
     [HideInInspector] public float currentCriticalHitDamage;
     [HideInInspector] public float currentKnockbackForce;
@@ -59,6 +54,10 @@ public class AttributeManager : MonoBehaviour
     [HideInInspector] public float currentBurnChance;
     [HideInInspector] public float currentStunChance;
 
+
+    public StatCollection Stats { get; } = new();
+    private float minCooldownValue = 0.1f;
+    
     private void Awake()
     {
         if (Instance == null)
@@ -88,11 +87,11 @@ public class AttributeManager : MonoBehaviour
             {
                 foreach (StatType statType in Enum.GetValues(typeof(StatType)))
                 {
-                    flatBonuses[statType] = 0f;
-                    percentBonuses[statType] = 0f;
+                    Stats.flatBonuses[statType] = 0f;
+                    Stats.percentBonuses[statType] = 0f;
                 }
                 SetBaseStats();
-                UpdateAbilityStats();
+                RecalculateStats();
             }
         }
     }
@@ -102,6 +101,8 @@ public class AttributeManager : MonoBehaviour
         currentDamage = baseDamage;
         currentMaxHealth = baseMaxHealth;
         currentMoveSpeed = baseMoveSpeed;
+        currentCooldownRate = baseCooldownRate;
+        currentRange = baseRange;
         currentCriticalHitChance = baseCriticalHitChance;
         currentCriticalHitDamage = baseCriticalHitDamage;
         currentKnockbackForce = baseKnockbackForce;
@@ -111,67 +112,46 @@ public class AttributeManager : MonoBehaviour
         currentBurnChance = baseBurnChance;
         currentStunChance = baseStunChance;
     }
-
-    private void UpdateAbilityStats()
+    
+    public float GetBaseStat(StatType statType)
     {
-        currentDamage = GetStatValue(StatType.Damage, baseDamage);
-        currentMaxHealth = GetStatValue(StatType.MaxHealth, baseMaxHealth);
-        currentMoveSpeed = GetStatValue(StatType.MovementSpeed, baseMoveSpeed);
-        currentCriticalHitChance = GetStatValue(StatType.CriticalHitChance, baseCriticalHitChance);
-        currentCriticalHitDamage = GetStatValue(StatType.CriticalHitDamage, baseCriticalHitDamage);
-        currentKnockbackForce = GetStatValue(StatType.KnockbackForce, baseKnockbackForce);
-        currentDodgeChance = GetStatValue(StatType.DodgeChance, baseDodgeChance);
-        currentArmour = GetStatValue(StatType.Armour, baseArmour);
-        currentBleedChance = GetStatValue(StatType.BleedChance, baseBleedChance);
-        currentBurnChance = GetStatValue(StatType.BleedChance, baseBurnChance);
-        currentStunChance = GetStatValue(StatType.BleedChance, baseStunChance);
-        Debug.Log($"Applying burn chance modifier: {currentBurnChance}");
+        return statType switch
+        {
+            StatType.Damage => baseDamage,
+            StatType.MaxHealth => baseMaxHealth,
+            StatType.MovementSpeed => baseMoveSpeed,
+            StatType.CooldownRate => baseCooldownRate,
+            StatType.Range => baseRange,
+            StatType.CriticalHitChance => baseCriticalHitChance,
+            StatType.CriticalHitDamage => baseCriticalHitDamage,
+            StatType.KnockbackForce => baseKnockbackForce,
+            StatType.DodgeChance => baseDodgeChance,
+            StatType.Armour => baseArmour,
+            StatType.BleedChance => baseBleedChance,
+            StatType.BurnChance => baseBurnChance,
+            StatType.StunChance => baseStunChance,
+            _ => 0f
+        };
     }
     
-    public float GetStatValue(StatType statType, float baseValue)
+    public float GetStatValue(StatType statType)
     {
-        float flatBonus = flatBonuses[statType];
-        float percentBonus = percentBonuses[statType];
-
-        if (statType == StatType.CooldownRate)
-        {
-            float baseCooldown = baseValue + flatBonus;
-
-            // Apply additive scaling up to 50% total reduction
-            if (percentBonus <= 50f)
-            {
-                float cooldown = baseCooldown * (1 - percentBonus / 100f);
-                return Mathf.Max(cooldown, minCooldownValue);  // Clamp to min cooldown
-            }
-            else
-            {
-                // First apply the flat 50% reduction
-                float cooldown = baseCooldown * 0.5f;  // 50% reduction
-
-                // Apply the remaining reduction multiplicatively
-                float extraReduction = percentBonus - 50f;
-                float cooldownMultiplier = Mathf.Pow(0.80f, extraReduction / 20f);  // Multiplicative for further reductions
-                return Mathf.Max(cooldown * cooldownMultiplier, minCooldownValue);  // Clamp to min cooldown
-            }
-        }
-        
-        return (baseValue + flatBonus) * (1 + percentBonus / 100f);
+        float baseVal = GetBaseStat(statType);
+        float flat = Stats.flatBonuses.GetValueOrDefault(statType, 0f);
+        float percent = Stats.percentBonuses.GetValueOrDefault(statType, 0f);
+        return (baseVal + flat) * (1 + percent / 100f);
     }
     
     public void ApplyModifier(StatModifier modifier)
     {
         Debug.Log("Applying modifier: " + modifier.ToString());
-        flatBonuses[modifier.statType] += modifier.flatBonus;
-        percentBonuses[modifier.statType] += modifier.percentBonus;
-
+        Stats.Apply(modifier);
         RecalculateStats();
     }
 
     public void RemoveModifier(StatModifier modifier)
     {
-        flatBonuses[modifier.statType] -= modifier.flatBonus;
-        percentBonuses[modifier.statType] -= modifier.percentBonus;
-
+        Stats.Remove(modifier);
         RecalculateStats();
     }
 
@@ -179,8 +159,8 @@ public class AttributeManager : MonoBehaviour
     {
         foreach (StatType statType in Enum.GetValues(typeof(StatType)))
         {
-            flatBonuses[statType] = 0f;
-            percentBonuses[statType] = 0f;
+            Stats.flatBonuses[statType] = 0f;
+            Stats.percentBonuses[statType] = 0f;
         }
         SetBaseStats();
         RecalculateStats();
@@ -198,14 +178,6 @@ public class AttributeManager : MonoBehaviour
         if (bleedChance > 0)
             triggers.Add(StatType.BurnChance, currentBurnChance);
         
-        /*float burnChance = currentBurnChance;
-        if (burnChance > 0)
-            triggers.Add(new StatusEffectTrigger(StatType.BurnChance, burnChance));
-        
-        float stunChance = currentStunChance;
-        if (burnChance > 0)
-            triggers.Add(new StatusEffectTrigger(StatType.StunChance, stunChance));*/
-        
         return triggers;
     }
     
@@ -213,26 +185,12 @@ public class AttributeManager : MonoBehaviour
     {
         return chance > 0f && Random.Range(0f, 100f) <= chance;
     }
-    
-    public bool IsCriticalHit(float criticalHitChance)
-    {
-        float roll = UnityEngine.Random.Range(0f, 100f);
-
-        return roll <= criticalHitChance;
-    }
 
     public float CalculateCriticalHitDamage(float baseDamage, float bonusCriticalHitDamage)
     {
         float critMultiplier = 1.5f + (bonusCriticalHitDamage / 100f);
         float finalCriticalHitValue = baseDamage * critMultiplier;
         return Mathf.Ceil(finalCriticalHitValue);
-    }
-    
-    public float GetStatusEffectChance(StatType statusType)
-    {
-        float baseChance = GetStatValue(statusType, 0f);
-        if (baseChance <= 0) return 0;
-        return baseChance;
     }
 
     public float ArmourMitigation(float damage, float armour)
@@ -242,27 +200,20 @@ public class AttributeManager : MonoBehaviour
         return Mathf.Ceil(reducedDamage);
     }
 
-    public bool IsDodgeSuccessful(float dodgeChance)
+    public void RecalculateStats()
     {
-        float roll = UnityEngine.Random.value * 100;
-        return roll < dodgeChance; 
-    }
-
-    private void RecalculateStats()
-    {
-        Debug.Log($"Invoking stat change!");
-        UpdateAbilityStats();
+        currentDamage = Stats.Get(StatType.Damage, baseDamage);
+        currentMaxHealth = Stats.Get(StatType.MaxHealth, baseMaxHealth);
+        currentMoveSpeed = Stats.Get(StatType.MovementSpeed, baseMoveSpeed);
+        currentCriticalHitChance = Stats.Get(StatType.CriticalHitChance, baseCriticalHitChance);
+        currentCriticalHitDamage = Stats.Get(StatType.CriticalHitDamage, baseCriticalHitDamage);
+        currentKnockbackForce = Stats.Get(StatType.KnockbackForce, baseKnockbackForce);
+        currentDodgeChance = Stats.Get(StatType.DodgeChance, baseDodgeChance);
+        currentArmour = Stats.Get(StatType.Armour, baseArmour);
+        currentBleedChance = Stats.Get(StatType.BleedChance, baseBleedChance);
+        currentBurnChance = Stats.Get(StatType.BurnChance, baseBurnChance);
+        currentStunChance = Stats.Get(StatType.StunChance, baseStunChance);
+        
         EventManager.Instance.TriggerEvent("StatsChanged");
     }
-    
-    public Dictionary<StatType, float> GetFlatBonuses()
-    {
-        return new Dictionary<StatType, float>(flatBonuses);
-    }
-    
-    public Dictionary<StatType, float> GetPercentBonuses()
-    {
-        return new Dictionary<StatType, float>(percentBonuses);
-    }
-
 }

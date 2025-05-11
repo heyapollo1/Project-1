@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponTitle: Pistol
   weaponDescription: Small gun
-  baseDamage: 1
-  baseCooldownRate: 0.3
+  baseDamage: 50
+  baseCooldownRate: 0.25
   baseRange: 6
   baseKnockbackForce: 0
   baseCriticalHitChance: 0
@@ -36,29 +36,22 @@ MonoBehaviour:
   enemyLayer:
     serializedVersion: 2
     m_Bits: 8
-  defaultRarity: 0
+  rarity: 0
   rarityUpgrades:
   - rarityTier: 0
     additionalDamage: 0
     cooldownReduction: 0
     rangeIncrease: 0
-    uniqueAttributes: []
   - rarityTier: 1
     additionalDamage: 10
     cooldownReduction: 0
     rangeIncrease: 0
-    uniqueAttributes: []
   - rarityTier: 2
     additionalDamage: 20
     cooldownReduction: 0
     rangeIncrease: 0
-    uniqueAttributes: []
   - rarityTier: 3
     additionalDamage: 30
     cooldownReduction: 0
     rangeIncrease: 0
-    uniqueAttributes: []
   associatedTags: 
-  references:
-    version: 2
-    RefIds: []

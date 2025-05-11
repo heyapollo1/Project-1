@@ -1,31 +1,34 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class BaseItem : ItemData
 {
-    public BaseItem(string name, Sprite icon, int value, ItemType itemType, Rarity currentRarity, 
+    public BaseItem(string name, Sprite icon, int value, ItemType itemType, Rarity rarity, 
         List<StatModifier> modifiers = null, List<TagType> classTags = null, ICombatEffect combatEffect = null, IPassiveEffect passiveEffect = null)
     {
         itemName = name;
+        uniqueID = $"{name}_{Guid.NewGuid()}";
         this.icon = icon;
         this.itemType = itemType;
-        this.currentRarity = currentRarity;
+        this.rarity = rarity;
         this.combatEffect = combatEffect;
         this.passiveEffect = passiveEffect;
         this.modifiers = modifiers ?? new List<StatModifier>();
         this.classTags = classTags ?? new List<TagType>();
         this.value = Mathf.RoundToInt(value * GetRarityMultiplier());
-        defaultRarity = ItemFactory.GetDefaultRarity(itemName);
+        
+        Debug.Log($"[BaseItem Created] {itemName} ({rarity}) [ID: {uniqueID}]");
     }
     
-    public virtual void Apply(AttributeManager playerStats)
+    public virtual void Apply()
     {
         if (modifiers != null)
         {
             foreach (StatModifier modifier in modifiers)
             {
-                playerStats.ApplyModifier(modifier);
+                AttributeManager.Instance.ApplyModifier(modifier);
             }
         }
         if (combatEffect != null)
@@ -38,16 +41,16 @@ public class BaseItem : ItemData
             Debug.Log($"Passive effect: {passiveEffect} added.");
             passiveEffect?.Apply();
         }
-        Debug.Log($"{itemName} applied. Rarity: {currentRarity}.");
+        Debug.Log($"{itemName} applied. Rarity: {rarity}.");
     }
     
-    public virtual void Remove(AttributeManager playerStats)
+    public virtual void Remove()
     {
         if (modifiers != null)
         {
             foreach (StatModifier modifier in modifiers)
             {
-                playerStats.RemoveModifier(modifier);
+                AttributeManager.Instance.RemoveModifier(modifier);
             }
         }
         if (combatEffect != null)
@@ -59,20 +62,25 @@ public class BaseItem : ItemData
             Debug.Log($"Passive effect: {passiveEffect} added.");
             passiveEffect?.Remove();
         }
-        Debug.Log($"{itemName} removed. Rarity: {currentRarity}.");
+        Debug.Log($"{itemName} removed. Rarity: {rarity}.");
     }
     
-    public virtual void Upgrade()
+    /*public virtual void Upgrade()
     {
-        if (currentRarity < Rarity.Legendary)
+        if (rarity < Rarity.Legendary)
         {
-            currentRarity++;
+            rarity++;
         }
+    }*/
+    
+    public void AssignUI(ItemUI ui)
+    {
+        assignedUI = ui;
     }
     
     public float GetRarityMultiplier()
     {
-        return currentRarity switch
+        return rarity switch
         {
             Rarity.Common => 1.0f,
             Rarity.Rare => 1.5f,
@@ -82,7 +90,7 @@ public class BaseItem : ItemData
         };
     }
     
-    public virtual string UpdateDescription(bool showUpgrade = false)
+    public virtual string UpdateDescription()
     {
         return description;
     }

@@ -15,13 +15,11 @@ public static class SaveManager {
         }
 
         gameData.isNewGame = false;
-        var player = PlayerManager.Instance.playerInstance;
-        var attributes = AttributeManager.Instance;
-        
+
         // Player Position
-        if (player != null)
+        if (PlayerManager.Instance.playerInstance != null)
         {
-            gameData.playerState.position = player.transform.position;
+            gameData.playerState.position = PlayerManager.Instance.playerInstance.transform.position;
             Debug.Log($"Player correctly positioned at saved position: {gameData.playerState.position}");
         }
         else
@@ -36,38 +34,37 @@ public static class SaveManager {
         gameData.playerState.health = PlayerHealthManager.Instance.currentHealth;
         gameData.playerState.resources = ResourceManager.Instance.currentCurrency;
         gameData.playerState.inventorySlots = InventoryManager.Instance.inventorySlots;
-        gameData.playerState.inventoryWithRarity = InventoryManager.Instance.GetInventoryNamesWithRarity();
-        gameData.playerState.acquiredWeapons = WeaponManager.Instance.GetWeaponNames();
+
+        gameData.playerState.inventoryItemData = ItemTracker.Instance.GetInventoryItemData();
         gameData.playerState.currentLoadoutID = WeaponManager.Instance.GetCurrentLoadoutID();
-        //gameData.playerState.equippedLeftWeapon = WeaponManager.Instance.leftWeapon?.weaponData?.weaponTitle ?? "";
-        //gameData.playerState.equippedRightWeapon = WeaponManager.Instance.rightWeapon?.weaponData?.weaponTitle ?? "";
         gameData.playerState.savedWeaponLoadouts.Clear();
         foreach (var loadout in WeaponManager.Instance.GetPlayerLoadouts())
         {
-            WeaponLoadoutData loadoutData = new WeaponLoadoutData(loadout);
+            PlayerLoadoutData loadoutData = new PlayerLoadoutData(loadout);
             gameData.playerState.savedWeaponLoadouts.Add(loadoutData);
-            Debug.Log($"Saving Loadout: Left-{loadoutData.leftWeapon} | Right-{loadoutData.rightWeapon}");
         }
-        //gameData.playerState.equippedWeapon = WeaponManager.Instance.GetEquippedWeaponName();
         gameData.playerState.acquiredAbilities = PlayerAbilityManager.Instance.GetAbilityNames();
         gameData.playerState.upgrades = UpgradeManager.Instance.GetUpgradeNames();
-        //gameData.playerState.flatBonuses = attributes.GetFlatBonuses();
-        //gameData.playerState.percentBonuses = attributes.GetPercentBonuses();
         
         //World State
         gameData.worldState.currentStageConfigName = StageManager.Instance.GetCurrentStageConfigName();
         gameData.worldState.currentStageIndex = StageManager.Instance.GetCurrentStageIndex();
         gameData.worldState.isMapActive = MapUI.Instance.IsMapActive();
         gameData.worldState.isStageActive = StageManager.Instance.IsStageActive();
-        gameData.worldState.activeItemNames = ItemDatabase.Instance.GetActiveItemNames();
-        gameData.worldState.encounterData = EncounterManager.Instance.GetCurrentEncounterData();
-        gameData.worldState.currentEncounter = EncounterManager.Instance != null ? EncounterManager.Instance.GetCurrentEncounterType() : EncounterType.None;
-        
-        //Shop State
+        gameData.worldState.worldItemData = ItemTracker.Instance.GetWorldItemData();
+        gameData.worldState.savedChestStates = ChestStateManager.Instance.GetAllChestStates();
+        gameData.worldState.currentEncounter = EncounterManager.Instance.IsEncounterActive() ? EncounterManager.Instance.GetCurrentEncounterType() : EncounterType.None;
+        switch (gameData.worldState.currentEncounter)
+        {
+            case EncounterType.Shop: 
+                gameData.worldState.pedestalItems.Clear();
+                gameData.worldState.pedestalItems = ShopEncounter.Instance.GetPedestalData();
+                break; 
+        }
         if (gameData.worldState.currentEncounter == EncounterType.Shop)
         {
             gameData.worldState.pedestalItems.Clear();
-            gameData.worldState.pedestalItems = ShopManager.Instance.GetPedestalItemNamesAndRarity();
+            gameData.worldState.pedestalItems = ShopEncounter.Instance.GetPedestalData();
         }
         
         // Save Camera Positions
@@ -97,10 +94,9 @@ public static class SaveManager {
     }
 
     public static GameData LoadGame() { // get game data
-        
         if (!File.Exists(savePath))
         {
-            Debug.LogWarning("No save file found. Creating a new game state.");
+            //Debug.Log("No save file found. Creating a new game state.");
             return new GameData();
         }
         
@@ -113,7 +109,6 @@ public static class SaveManager {
                 loadedData.worldState = new WorldState();
                 Debug.LogWarning("WorldState missing from save file; initialized with defaults.");
             }
-            
             return loadedData;
         }
         catch (System.Exception ex)
@@ -140,11 +135,12 @@ public static class SaveManager {
         WeaponManager.Instance.LoadWeaponsFromSave(gameData.playerState); //load weapons but dont apply effects yet
         PlayerAbilityManager.Instance.LoadAbilitiesFromSave(gameData.playerState); //load abilities but dont apply effects yet
         UpgradeManager.Instance.LoadUpgradesFromSave(gameData.playerState); //Load upgrades but dont apply effects yet
-        
-        InventoryManager.Instance.ApplyItemBonuses(); //now base stats are ready, APPLY MODIFIERS
+      
+        WeaponManager.Instance.ApplyLoadoutBonuses();
+        InventoryManager.Instance.ApplyInventoryBonuses(); //now base stats are ready, APPLY MODIFIERS
         UpgradeManager.Instance.ApplyAllUpgrades(); //SAME
-        
-        ItemDatabase.Instance.LoadActiveItemState(gameData.worldState); //set active item states
+        GameManager.Instance.LoadWorldItemState(gameData.worldState);
+        ChestStateManager.Instance.LoadWorldChestStates(gameData.worldState);
         MapUI.Instance.ApplyMapUIState(gameData.worldState); //set map state
         EncounterManager.Instance.LoadEncounterFromSave(gameData.worldState); //load encounter data
         

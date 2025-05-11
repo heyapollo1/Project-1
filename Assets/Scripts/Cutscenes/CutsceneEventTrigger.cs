@@ -5,9 +5,9 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Cutscene/Actions/Event")]
 public class CutsceneEventTrigger : CutsceneAction
 {
-    public string eventName; // The name of the event to trigger
-    public EncounterData encounter;
-    public bool isEncounterEvent;
+    public string eventName;
+    public string eventStringParameter;
+    public bool hasStringParameter;
 
     public override IEnumerator Execute(CutsceneManager cutsceneManager, Action onComplete)
     {
@@ -18,25 +18,16 @@ public class CutsceneEventTrigger : CutsceneAction
             yield break;
         }
 
-        if (isEncounterEvent)
+        if (hasStringParameter)
         {
-            Debug.Log($"Triggering Encounter Event: {eventName}, Encounter Name: {encounter}");
-
-            if (encounter == null)
-            {
-                Debug.LogError("EncounterData is NULL! Event won't trigger correctly.");
-            }
-
-            Debug.Log($"Triggering Encounter Event: {eventName}, Encounter Name: {encounter}");
-            EventManager.Instance.TriggerEvent("EnterEncounter", encounter);
+            EventManager.Instance.TriggerEvent(eventName, eventStringParameter);
         }
         else
         {
             Debug.Log($"Triggering Cutscene Event: {eventName}");
             EventManager.Instance.TriggerEvent(eventName);
         }
-
-        // Complete this action
+        
         onComplete?.Invoke();
         yield break;
     }

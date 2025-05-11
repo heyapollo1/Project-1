@@ -53,7 +53,7 @@ public class BurnerProjectile : MonoBehaviour
             
             List<StatModifier> statMods = PlayerCombat.Instance.GetModifiedStats(context); // modify stats based on accrued player combat bonuses
             if (statMods.Count > 0) ApplyStatMods(statMods);
-            bool isCriticalHit = AttributeManager.Instance.IsCriticalHit(criticalHitChance);
+            bool isCriticalHit = AttributeManager.Instance.ShouldTrigger(criticalHitChance);
             float finalDamage = isCriticalHit ? damageAmount : AttributeManager.Instance.CalculateCriticalHitDamage(damageAmount, criticalHitDamage);
 
             PlayerCombat.Instance.HandleOnHit(context);

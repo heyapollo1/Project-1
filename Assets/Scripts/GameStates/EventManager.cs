@@ -16,6 +16,8 @@ public class EventManager : BaseManager
     private Dictionary<string, UnityEvent<string, float>> eventDictionaryWithStringAndFloat;
     private Dictionary<string, UnityEvent<float>> eventDictionaryWithFloat;
     private Dictionary<string, UnityEvent<float, float>> eventDictionaryWithFloatAndFloat;
+    private Dictionary<string, UnityEvent<string, bool, bool>> eventDictionaryWithBoolAndBool;
+    private Dictionary<string, UnityEvent<string, bool>> eventDictionaryWithBool;
 
     #region UpgradeEvents
     private Dictionary<string, UnityEvent<UpgradeData>> eventDictionaryWithUpgradeData;
@@ -78,6 +80,8 @@ public class EventManager : BaseManager
         eventDictionaryWithStringAndFloat = new Dictionary<string, UnityEvent<string, float>>();
         eventDictionaryWithFloat = new Dictionary<string, UnityEvent<float>>();
         eventDictionaryWithFloatAndFloat = new Dictionary<string, UnityEvent<float, float>>();
+        eventDictionaryWithBoolAndBool = new Dictionary<string, UnityEvent<string, bool, bool>>();
+        eventDictionaryWithBool = new Dictionary<string, UnityEvent<string, bool>>();
 
         eventDictionaryWithUpgradeData = new Dictionary<string, UnityEvent<UpgradeData>>();
         eventDictionaryWithUpgradeDataList = new Dictionary<string, UnityEvent<List<UpgradeData>>>();
@@ -314,6 +318,70 @@ public class EventManager : BaseManager
             thisEvent.Invoke(firstFloatParameter, SecondFloatParameter);
         }
     }
+    
+    //string bool bool
+    public void StartListening(string eventName, UnityAction<string, bool, bool> listener)
+    {
+        if (eventDictionaryWithBoolAndBool.TryGetValue(eventName, out UnityEvent<string, bool, bool> thisEvent))
+        {
+            thisEvent.AddListener(listener);
+        }
+        else
+        {
+            thisEvent = new UnityEvent<string, bool, bool>();
+            thisEvent.AddListener(listener);
+            eventDictionaryWithBoolAndBool.Add(eventName, thisEvent);
+        }
+    }
+
+    public void StopListening(string eventName, UnityAction<string, bool, bool> listener)
+    {
+        if (eventDictionaryWithBoolAndBool.TryGetValue(eventName, out UnityEvent<string, bool, bool> thisEvent))
+        {
+            thisEvent.RemoveListener(listener);
+        }
+    }
+
+    public void TriggerEvent(string eventName, string stringParameter, bool firstBoolParameter, bool secondBoolParameter)
+    {
+        if (eventDictionaryWithBoolAndBool.TryGetValue(eventName, out UnityEvent<string, bool, bool> thisEvent))
+        {
+            thisEvent.Invoke(stringParameter, firstBoolParameter, secondBoolParameter);
+        }
+    }
+    
+    //string bool
+    //public void StartListening(string eventName, UnityAction<string, Transform> listener)
+    public void StartListening(string eventName, UnityAction<string, bool> listener)
+    {
+        if (eventDictionaryWithBool.TryGetValue(eventName, out UnityEvent<string, bool> thisEvent))
+        {
+            thisEvent.AddListener(listener);
+        }
+        else
+        {
+            thisEvent = new UnityEvent<string, bool>();
+            thisEvent.AddListener(listener);
+            eventDictionaryWithBool.Add(eventName, thisEvent);
+        }
+    }
+
+    public void StopListening(string eventName, UnityAction<string, bool> listener)
+    {
+        if (eventDictionaryWithBool.TryGetValue(eventName, out UnityEvent<string, bool> thisEvent))
+        {
+            thisEvent.RemoveListener(listener);
+        }
+    }
+
+    public void TriggerEvent(string eventName, string stringParameter, bool boolParameter)
+    {
+        if (eventDictionaryWithBool.TryGetValue(eventName, out UnityEvent<string, bool> thisEvent))
+        {
+            thisEvent.Invoke(stringParameter, boolParameter);
+        }
+    }
+
 
     // UpgradeData based events ---
 
@@ -708,7 +776,7 @@ public class EventManager : BaseManager
         }
     }
     
-    public void StartListening(string eventName, UnityAction<string, Transform> listener)
+    /*public void StartListening(string eventName, UnityAction<string, Transform> listener)
     {
         if (!eventDictionaryWithStringAndTransform.TryGetValue(eventName, out UnityEvent<string, Transform> thisEvent))
         {
@@ -740,7 +808,7 @@ public class EventManager : BaseManager
         {
             Debug.LogWarning($"Event '{eventName}' not found.");
         }
-    }
+    }*/
     
     public void StartListening(string eventName, UnityAction<string, Vector3> listener)
     {

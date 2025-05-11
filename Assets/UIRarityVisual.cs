@@ -17,12 +17,10 @@ public class UIRarityVisual : MonoBehaviour
 
     public void ApplyUIRarityVisual(Rarity rarity)
     {
-        //Debug.Log($"Rarity for visuals: {rarity}");
         if (borderImage == null) return;
 
         if (RarityColors.TryGetValue(rarity, out var color))
         {
-            //Debug.Log("Changing UIRarityVisual");
             borderImage.color = color;
         }
         else

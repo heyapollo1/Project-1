@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
 using TMPro;
 
 public class StageSelectUI : MonoBehaviour
@@ -69,16 +70,19 @@ public class StageSelectUI : MonoBehaviour
         if (stageSelectButton != null)
         {
             stageSelectButton.onClick.RemoveAllListeners();
-            stageSelectButton.onClick.AddListener(() => OnStageSelected(stageData));
+            stageSelectButton.onClick.AddListener(() => StartCoroutine(OnStageSelected(stageData)));
         }
     }
 
-    private void OnStageSelected(StageConfig selectedStage)
+    private IEnumerator OnStageSelected(StageConfig selectedStage)
     {
-        Debug.LogWarning($"Upgrade selected");
+        Debug.Log($"Stage selected: {selectedStage.stageName}");
         AudioManager.Instance.PlayUISound("Upgrade_Select", 0.7f);
-        StageManager.Instance.InitializeStageConfig(selectedStage, true);
-        //EventManager.Instance.TriggerEvent("Stage", selectedStage);
+        StageManager.Instance.LoadStageConfig(selectedStage);
+        
+        yield return null;
+        
+        EventManager.Instance.TriggerEvent("StageInitialized", selectedStage);
         stageSelectPanelActive = false;
         CloseStageSelectPanel();
     }

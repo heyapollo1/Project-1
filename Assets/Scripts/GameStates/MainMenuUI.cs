@@ -98,8 +98,8 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnExitGameClicked()
     {
-        Application.Quit();
-        UnityEditor.EditorApplication.isPlaying = false;
+        //Application.Quit();
+       // UnityEditor.EditorApplication.isPlaying = false;
     }
     
     private void OnLoadSaveFileClicked()

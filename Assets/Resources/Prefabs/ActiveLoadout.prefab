@@ -88,8 +88,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03c5f5a7d9d814f4391c0e51ec7505a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  equippedWeapon: {fileID: 0}
-  isLeftSlot: 0
+  slottedItem: {fileID: 0}
+  isWeapon: 0
+  isLeftHand: 0
+  loadoutID: 0
 --- !u!1 &2797606291747427199
 GameObject:
   m_ObjectHideFlags: 0
@@ -240,8 +242,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03c5f5a7d9d814f4391c0e51ec7505a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  equippedWeapon: {fileID: 0}
-  isLeftSlot: 1
+  slottedItem: {fileID: 0}
+  isWeapon: 0
+  isLeftHand: 0
+  loadoutID: 0
 --- !u!1 &4064703155021574098
 GameObject:
   m_ObjectHideFlags: 0
@@ -327,7 +331,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3209347759282592149}
   - component: {fileID: 5032497732978522611}
-  - component: {fileID: 7500274798093509962}
   m_Layer: 5
   m_Name: ActiveLoadout
   m_TagString: Untagged
@@ -364,18 +367,3 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8784140394267800085}
   m_CullTransparentMesh: 1
---- !u!114 &7500274798093509962
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8784140394267800085}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3bf23b54806bb4b2ebb778a174254ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  leftWeaponSlot: {fileID: 0}
-  rightWeaponSlot: {fileID: 0}
-  activeWeaponUIPrefab: {fileID: 0}

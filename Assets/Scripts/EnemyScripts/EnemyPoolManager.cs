@@ -49,15 +49,14 @@ public class EnemyPoolManager : BaseManager
 
     public void PrepareEnemyPool(StageSettings currentStage) //Setup for next stage
     {
+        Debug.Log("Prep pool");
         foreach (WaveSettings wave in currentStage.wavesInStage)
         {
-            // Iterate through each enemy requirement in the wave
-            foreach (var enemyRequirement in wave.enemyRequirements)
+            foreach (var enemyRequirement in wave.enemyPayload)
             {
                 string enemyType = enemyRequirement.enemyType;
                 const int fixedPoolSize = 20;
                 
-                // Check if the pool for this enemy type already exists
                 if (!enemyPools.ContainsKey(enemyType))
                 {
                     Debug.Log($"Creating pool for enemy type: {enemyType}");
@@ -76,7 +75,6 @@ public class EnemyPoolManager : BaseManager
                 }
             }
         }
-
         Debug.Log("Enemy pools prepared for the entire stage.");
     }
     
@@ -84,7 +82,7 @@ public class EnemyPoolManager : BaseManager
     {
         enemyWeights.Clear();
 
-        foreach (var enemyRequirement in wave.enemyRequirements)
+        foreach (var enemyRequirement in wave.enemyPayload)
         {
             if (!enemyWeights.ContainsKey(enemyRequirement.enemyType))
             {
@@ -101,7 +99,7 @@ public class EnemyPoolManager : BaseManager
     {
         enemyWeights.Clear();
 
-        foreach (var enemyRequirement in wave.enemyRequirements)
+        foreach (var enemyRequirement in wave.enemyPayload)
         {
             if (!enemyWeights.ContainsKey(enemyRequirement.enemyType))
             {
@@ -117,7 +115,6 @@ public class EnemyPoolManager : BaseManager
     public void HandlePortalTransition()
     {
         if (enemyPools.Count == 0) return;
-        
         CleanupPools();
     }
 
@@ -235,7 +232,7 @@ public class EnemyPoolManager : BaseManager
 
         foreach (WaveSettings wave in currentStage.wavesInStage)
         {
-            foreach (var enemyRequirement in wave.enemyRequirements)
+            foreach (var enemyRequirement in wave.enemyPayload)
             {
                 string enemyType = enemyRequirement.enemyType;
                 const int fixedPoolSize = 20;

@@ -14,5 +14,12 @@ public interface IDefaultTooltipData
 {
     string GetTitle();
     string GetDescription();
-    Sprite GetIcon(); // return null if no icon
+    Sprite GetIcon();
+}
+
+public interface IWeapon
+{
+    void UseWeapon();
+    string GetDescription();
+    Sprite GetIcon(); 
 }

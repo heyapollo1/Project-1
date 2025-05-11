@@ -24,7 +24,7 @@ public class RangeUpgrade : UpgradeData
         // Apply the modifier to player stats
         playerStats.ApplyModifier(rangeModifier);
 
-        Debug.Log($"Attack Speed upgraded. Current Attack Speed: {playerStats.GetStatValue(StatType.Range, 1f)}");
+        Debug.Log($"Attack Speed upgraded. Current Attack Speed: {playerStats.GetStatValue(StatType.Range)}");
     }
 
     public override void ScaleUpgrade(AttributeManager playerStats)

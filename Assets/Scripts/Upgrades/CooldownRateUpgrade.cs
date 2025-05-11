@@ -23,7 +23,7 @@ public class CooldownRateUpgrade : UpgradeData
         // Apply the modifier to player stats
         playerStats.ApplyModifier(cooldownRateModifier);
 
-        Debug.Log($"CooldownReduction upgraded. Current CooldownReduction: {playerStats.GetStatValue(StatType.CooldownRate, 1f)}");
+        Debug.Log($"CooldownReduction upgraded. Current CooldownReduction: {playerStats.GetStatValue(StatType.CooldownRate)}");
     }
 
     public override void ScaleUpgrade(AttributeManager playerStats)

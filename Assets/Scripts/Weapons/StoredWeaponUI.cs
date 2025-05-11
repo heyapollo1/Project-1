@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 
-public class StoredWeaponUI : MonoBehaviour
+public class StoredSlotUI : MonoBehaviour
 {
     [Header("UI Elements")]
     public Slider cooldownSlider;  // stored item state
@@ -12,19 +12,21 @@ public class StoredWeaponUI : MonoBehaviour
     public UIRarityVisual uiRarityVisual;
     public Material defaultMaterial;
     public Material upgradeMaterial;
+    public bool isWeapon;
     
     private RectTransform uiTransform;
     private string weaponKey;
     [HideInInspector] public WeaponInstance assignedWeapon;
+    [HideInInspector] public BaseItem assignedItem;
     
     private float emptySize = 1f; 
     private float normalSize = 2f; 
-
-    public void Initialize(WeaponInstance weaponInstance, int loadoutID, bool isLeftHand)
+    
+    public void InitializeWeaponUI(WeaponInstance weapon, int loadoutIndex, bool isLeftHand)
     {
         GetWeaponCooldownEvent();
-        weaponKey = $"Loadout{loadoutID}_{(isLeftHand ? "L" : "R")}_{weaponInstance.weaponTitle}";
-        assignedWeapon = weaponInstance;
+        weaponKey = $"Loadout{loadoutIndex}_{(isLeftHand ? "L" : "R")}_{weapon.weaponTitle}";
+        assignedWeapon = weapon;
         
         if (uiTransform == null)
         {
@@ -33,17 +35,36 @@ public class StoredWeaponUI : MonoBehaviour
         
         float currentCooldown = WeaponCooldownManager.Instance.GetCooldownTime(weaponKey);
         float totalCooldown = WeaponCooldownManager.Instance.GetTotalCooldownTime(weaponKey);
-        Debug.Log("Initialized Stored Weapon UI");
+        //Debug.Log("Initialized Stored Weapon UI");
         uiRarityVisual.ApplyUIRarityVisual(assignedWeapon.rarity);
-        //ChangeSize(normalSize);
         UpdateStoredCooldownUI(currentCooldown, totalCooldown);
+
+        isWeapon = true;
+    }
+    
+    public void InitializeItemUI(BaseItem item, int loadoutIndex, bool isLeftHand)
+    {
+        uiRarityVisual.ApplyUIRarityVisual(item.rarity);
+        weaponKey = $"Loadout{loadoutIndex}_{(isLeftHand ? "L" : "R")}_{item.itemName}";
+        assignedItem = item;
+        
+        if (uiTransform == null)
+        {
+            uiTransform = sliderScale.GetComponent<RectTransform>();
+        }
+        
+        float currentCooldown = WeaponCooldownManager.Instance.GetCooldownTime(weaponKey);
+        float totalCooldown = WeaponCooldownManager.Instance.GetTotalCooldownTime(weaponKey);
+        //Debug.Log("Initialized Stored Item UI");
+        uiRarityVisual.ApplyUIRarityVisual(assignedItem.rarity);
+        UpdateStoredCooldownUI(currentCooldown, totalCooldown);
+
+        isWeapon = false;
     }
     
     public void SetEmpty()
     {
-        Debug.Log("SetEmpty");
         assignedWeapon = null;
-        //uiRarityVisual.ApplyDefaultVisual();
         cooldownSlider.value = 0;
     }
     
@@ -62,7 +83,6 @@ public class StoredWeaponUI : MonoBehaviour
         if (currentCooldown > 0)
         {
             cooldownSlider.value = currentCooldown / totalCooldown;
-            //Debug.Log($"cooldown Value: {cooldownSlider.value}");
         }
         else
         {
@@ -103,20 +123,3 @@ public class StoredWeaponUI : MonoBehaviour
         uiTransform.sizeDelta = new Vector2(uiTransform.sizeDelta.x, targetSize);
     }
 }
-
-    /*private IEnumerator AnimateSize(float targetSize)
-    {
-        float duration = 0.2f;
-        float startSize = uiTransform.sizeDelta.y;
-        float time = 0;
-
-        while (time < duration)
-        {
-            time += Time.deltaTime;
-            float newY = Mathf.Lerp(startSize, targetSize, time / duration);
-            uiTransform.sizeDelta = new Vector2(uiTransform.sizeDelta.x, newY);
-            yield return null;
-        }
-
-        uiTransform.sizeDelta = new Vector2(uiTransform.sizeDelta.x, targetSize);
-    }*/

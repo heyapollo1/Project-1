@@ -12,31 +12,21 @@ public class PistolWeapon : WeaponBase
     [HideInInspector] public GameObject bulletProjectile;
     private bool isFiring = false;
 
-    public override void InitializeWeapon(bool isLeftHand)
+    public override void InitializeWeapon()
     {
-        Debug.Log("Initializing Pistol");
-        EventManager.Instance.StartListening("CooldownComplete", CompleteCooldown);
-        this.isLeftHand = isLeftHand;
-        weaponKey = GenerateWeaponKey(isLeftHand);
-        weaponUI = LoadoutUIManager.Instance.GetActiveSlotUI(isLeftHand);
         weaponData = weaponInstance.weaponData;
-        weaponInstance.weaponData.enemyLayer = LayerMask.GetMask("Enemy");
         weaponSpriteRenderer = GetComponent<SpriteRenderer>();
         isAutoAiming = false;
         
-        if (weaponSpriteRenderer == null)
-        {
-            Debug.LogError("no spriterenderer");
-        }
-        
+        EventManager.Instance.StartListening("CooldownComplete", CompleteCooldown);
         EventManager.Instance.StartListening("StatsChanged", UpdateWeaponStats);
-
         SetBaseStats();
         UpdateWeaponStats();
     }
 
     private void OnDestroy()
     {
+        EventManager.Instance.StopListening("CooldownComplete", CompleteCooldown);
         EventManager.Instance.StopListening("StatsChanged", UpdateWeaponStats);
     }
 
@@ -52,12 +42,8 @@ public class PistolWeapon : WeaponBase
 
     public override bool CanUseWeapon()
     {
-        if (isOnCooldown || isFiring) return false; 
-        if (isLeftHand)
-        {
-            return Input.GetMouseButton(0);
-        }
-        return Input.GetMouseButton(1);
+        if (isOnCooldown || isFiring) return false;
+        return true;
     }
 
     public override void UseWeapon()
@@ -75,7 +61,6 @@ public class PistolWeapon : WeaponBase
                     isFiring = false;
                     return;
                 }
-
                 Vector2 enemyDirection = (nearestEnemy.transform.position - playerController.transform.position).normalized;
                 lockedAimDirection = enemyDirection;
                 FireWeapon(lockedAimDirection);
@@ -113,11 +98,12 @@ public class PistolWeapon : WeaponBase
     
     private void UpdateWeaponStats()
     {
-        currentDamage = playerAttributes.GetStatValue(StatType.Damage, weaponInstance.baseDamage);
-        currentRange = playerAttributes.GetStatValue(StatType.Range, weaponInstance.baseRange);
-        currentCooldownRate = playerAttributes.GetStatValue(StatType.CooldownRate, weaponInstance.baseCooldownRate);
-        currentCriticalHitChance = playerAttributes.GetStatValue(StatType.CriticalHitChance, weaponInstance.baseCriticalHitChance);
-        currentCriticalHitDamage = playerAttributes.GetStatValue(StatType.CriticalHitDamage, weaponInstance.baseCriticalHitDamage);
+        currentDamage = weaponInstance.GetFinalStat(StatType.Damage);
+        currentRange = weaponInstance.GetFinalStat(StatType.Range);
+        currentCooldownRate = weaponInstance.GetFinalStat(StatType.CooldownRate);
+        currentKnockbackForce = weaponInstance.GetFinalStat(StatType.KnockbackForce);
+        currentCriticalHitChance = weaponInstance.GetFinalStat(StatType.CriticalHitChance);
+        currentCriticalHitDamage = weaponInstance.GetFinalStat(StatType.CriticalHitDamage);
 
         weaponInstance.UpdateStatTags(currentDamage, currentCooldownRate, currentRange); //UI
         Debug.Log($"Updating pistol stats:DMG: {weaponInstance.baseDamage}, CDR: {weaponInstance.baseCooldownRate}, RNG:{weaponInstance.baseRange}");

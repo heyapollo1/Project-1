@@ -211,7 +211,7 @@ public class EnemyManager : MonoBehaviour
 
     private void Update()
     {
-        if (StageManager.Instance.isStageActive && stageCompleteTriggered) return;
+        if (StageManager.Instance.stageIsActive && stageCompleteTriggered) return;
 
         cleanupTimer += Time.deltaTime;
         //Debug.Log("All waves complete: Checking for stage completion");

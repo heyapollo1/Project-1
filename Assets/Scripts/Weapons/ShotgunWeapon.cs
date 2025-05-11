@@ -13,18 +13,15 @@ public class ShotgunWeapon : WeaponBase
     [HideInInspector] public GameObject bulletProjectile;
     private bool isFiring = false;
 
-    public override void InitializeWeapon(bool isLeft)
+    public override void InitializeWeapon()
     {
-        Debug.Log($"Initializing Shotgun, {isLeft}.");
+        Debug.Log($"Initializing Shotgun");
+        weaponData = weaponInstance.weaponData;
+        weaponSpriteRenderer = GetComponent<SpriteRenderer>();
+        isAutoAiming = false;
+        
         EventManager.Instance.StartListening("CooldownComplete", CompleteCooldown);
         EventManager.Instance.StartListening("StatsChanged", UpdateWeaponStats);
-        weaponUI = LoadoutUIManager.Instance.GetActiveSlotUI(isLeftHand);
-        weaponKey = GenerateWeaponKey(isLeft);
-        weaponData = weaponInstance.weaponData;
-        weaponInstance.weaponData.enemyLayer = LayerMask.GetMask("Enemy");
-        weaponSpriteRenderer = GetComponent<SpriteRenderer>();
-        isLeftHand = isLeft;
-        isAutoAiming = false;
         
         SetBaseStats();
         UpdateWeaponStats();
@@ -35,7 +32,7 @@ public class ShotgunWeapon : WeaponBase
         EventManager.Instance.StopListening("CooldownComplete", CompleteCooldown);
         EventManager.Instance.StopListening("StatsChanged", UpdateWeaponStats);
     }
-
+    
     private void SetBaseStats()
     {
         currentDamage = weaponInstance.baseDamage;
@@ -45,15 +42,11 @@ public class ShotgunWeapon : WeaponBase
         currentCriticalHitChance = weaponInstance.baseCriticalHitDamage;
         currentCriticalHitDamage = weaponInstance.baseCriticalHitDamage;
     }
-
+    
     public override bool CanUseWeapon()
     {
         if (isOnCooldown || isFiring) return false;
-        if (isLeftHand)
-        {
-            return Input.GetMouseButton(0);
-        }
-        return Input.GetMouseButton(1);
+        return true;
     }
 
     public override void UseWeapon()
@@ -110,12 +103,12 @@ public class ShotgunWeapon : WeaponBase
 
     private void UpdateWeaponStats()
     {
-        currentDamage = playerAttributes.GetStatValue(StatType.Damage, weaponInstance.baseDamage);
-        currentRange = playerAttributes.GetStatValue(StatType.Range, weaponInstance.baseRange);
-        currentCooldownRate = playerAttributes.GetStatValue(StatType.CooldownRate, weaponInstance.baseCooldownRate);
-        currentKnockbackForce = playerAttributes.GetStatValue(StatType.KnockbackForce, weaponInstance.baseKnockbackForce);
-        currentCriticalHitChance = playerAttributes.GetStatValue(StatType.CriticalHitChance, weaponInstance.baseCriticalHitChance);
-        currentCriticalHitDamage = playerAttributes.GetStatValue(StatType.CriticalHitDamage, weaponInstance.baseCriticalHitDamage);
+        currentDamage = weaponInstance.GetFinalStat(StatType.Damage);
+        currentRange = weaponInstance.GetFinalStat(StatType.Range);
+        currentCooldownRate = weaponInstance.GetFinalStat(StatType.CooldownRate);
+        currentKnockbackForce = weaponInstance.GetFinalStat(StatType.KnockbackForce);
+        currentCriticalHitChance = weaponInstance.GetFinalStat(StatType.CriticalHitChance);
+        currentCriticalHitDamage = weaponInstance.GetFinalStat(StatType.CriticalHitDamage);
 
         weaponInstance.UpdateStatTags(currentDamage, currentCooldownRate, currentRange); //UI on tooltips
         Debug.Log($"Updating shotgun stats:DMG: {weaponInstance.baseDamage}, CDR: {weaponInstance.baseCooldownRate}, RNG:{weaponInstance.baseRange}");

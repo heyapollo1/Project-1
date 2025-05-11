@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: IntroInstantiateChest
   m_EditorClassIdentifier: 
   chestPrefab: {fileID: 5667670271133929025, guid: 93bff49644eb442228efd1fcc8e6dec9, type: 3}
-  rewardName: Shotgun
-  rarity: 2
-  isItem: 0
-  isWeapon: 1
-  spawnPosition: {x: 300, y: 4.2, z: 0}
+  spawnPosition: {x: 200, y: 4.2, z: 0}
+  rewardDefinitions:
+  - rewardType: 1
+    rewardName: Pistol
+  - rewardType: 0
+    rewardName: Apple

@@ -17,7 +17,9 @@ public class StageConfig : StageData
         if (currentStageNumber <= 1) return StageBracket.A;
         if (currentStageNumber <= 2) return StageBracket.B;
         if (currentStageNumber <= 3) return StageBracket.C;
-        return StageBracket.D;
+        if (currentStageNumber <= 4) return StageBracket.D;
+        if (currentStageNumber <= 5) return StageBracket.E;
+        return StageBracket.F;
     }
 }
 
@@ -35,16 +37,15 @@ public class WaveSettings
     public int waveNumber;
     public float spawnInterval = 1.0f;      // Time between spawns
     public int enemiesPerSpawn = 1;         // How many enemies spawn at once
-    public List<EnemyTypeRequirement> enemyRequirements; // Preload and weight requirements
+    public List<EnemyPayload> enemyPayload; // Preload and weight requirements
 }
 
 [System.Serializable]
-public class EnemyTypeRequirement
+public class EnemyPayload
 {
     public GameObject enemyPrefab;          // Prefab for the enemy
     public string enemyType;                // Identifier for the enemy type
     public int spawnWeight = 1;             // Weight for random spawning
-    //public int poolSize = 10;
     public void AutoAssignEnemyType()
     {
         if (enemyPrefab != null)

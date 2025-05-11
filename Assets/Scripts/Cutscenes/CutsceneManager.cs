@@ -9,12 +9,11 @@ public class CutsceneManager : MonoBehaviour
     public Transform currentTarget { get; private set; }
 
     [HideInInspector] public PlayerController playerController;
-
+    
     private CinemachineCamera playerCamera;
     private CinemachineCamera cutsceneCamera;
 
     [Header("Cutscene Settings")]
-    //public Cutscene introCutscene;
     public TutorialManager tutorialManager;
     public CanvasGroup fadeCanvas;
 
@@ -26,6 +25,7 @@ public class CutsceneManager : MonoBehaviour
         
         playerController = PlayerManager.Instance.playerInstance.GetComponent<PlayerController>();
         EventManager.Instance.StartListening("CamerasInitialized", GetCamerasAndStartIntro);
+        EventManager.Instance.StartListening("NewCutsceneTarget", SetCutsceneTarget);
     }
 
     private void OnDestroy()
@@ -59,6 +59,7 @@ public class CutsceneManager : MonoBehaviour
 
     public void StartCutscene(string cutsceneName, Transform target = null)
     {
+        Debug.Log("Starting current cutscene name: " + cutsceneName);
         cutsceneActive = true;
         var database = Resources.Load<CutsceneDatabase>("ScriptableObjects/Cutscenes/CutsceneDatabase");
         if (database == null)
@@ -69,7 +70,6 @@ public class CutsceneManager : MonoBehaviour
         Cutscene cutscene = database.GetCutscene(cutsceneName);
         currentTarget = target;
         cutsceneCamera.Priority = 20;
-        Debug.Log($"currentTarget Target: {currentTarget}");
         StartCoroutine(HandleCutscene(cutscene));
     }
 
@@ -78,35 +78,46 @@ public class CutsceneManager : MonoBehaviour
         playerController.DisableControls();
         EventManager.Instance.TriggerEvent("HideUI");
         PlayerAbilityManager.Instance.DisableAbilities();
-        WeaponManager.Instance.DisableWeapons();
-
         foreach (var action in cutscene.actions)
         {
-            Debug.Log($"Triggering {action.name} cutscene");
-
             bool actionComplete = false;
 
             yield return StartCoroutine(action.Execute(this, () => actionComplete = true));
             yield return new WaitUntil(() => actionComplete);
         }
-
-        Debug.Log($"finished {cutscene.name} cutscene");
-
+        StartCoroutine(WatchHandsDuringCutscene());
         if (currentTarget != playerController.transform)
         {
             currentTarget = null;
             playerCamera.Follow = playerController.transform;
         }
-
+        
+        Debug.Log($"finished {cutscene.name} cutscene");
         cutsceneCamera.Priority = 0;
         playerCamera.Priority = 10;
     
         playerController.EnableControls();
         PlayerAbilityManager.Instance.EnableAbilities();
-        EventManager.Instance.TriggerEvent("EnablePlayerWeapons");
         cutsceneActive = false;
     }
-
+    
+    private IEnumerator WatchHandsDuringCutscene()
+    {
+        while (cutsceneActive)
+        {
+            if (WeaponManager.Instance.leftHand == null || WeaponManager.Instance.rightHand == null)
+            {
+                Debug.LogError("Hands became NULL during the cutscene!");
+            }
+            yield return new WaitForSeconds(0.2f);
+        }
+    }
+    
+    private void SetCutsceneTarget(Transform newTarget)
+    {
+        currentTarget = newTarget;
+    }
+    
     public void RepositionCutsceneCamera(Vector3 newPosition)
     {
         cutsceneCamera.transform.position = new Vector3(newPosition.x, newPosition.y, cutsceneCamera.transform.position.z);
@@ -136,10 +147,6 @@ public class CutsceneManager : MonoBehaviour
         }
 
         cutsceneCamera.transform.position = targetPosition;
-
-        // Optionally re-enable Follow if needed
-        //cutsceneCamera.Follow = originalFollow;
-
         Debug.Log("Pan complete.");
     }
 

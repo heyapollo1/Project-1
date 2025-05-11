@@ -7,8 +7,8 @@ public class StageManager : MonoBehaviour
 {
     public static StageManager Instance;
 
-    //public StageUI stageUI;
     public StageSettings currentStage;
+    public GameObject gameplayMap;
     private StageConfig currentStageConfig;
     
     private float stageDuration; // Total time for the stage
@@ -19,15 +19,17 @@ public class StageManager : MonoBehaviour
     private int currentWaveIndex = 0;
     private int wavesInStage = 0;
     
-    public bool isStageActive = false;
-    
+    public Transform entryPoint;
+    public bool stageIsActive = false;
+
+    public StageBracket GetStageBracket() => currentStageConfig.GetStageBracket(currentStageIndex);
     public void Initialize()
     {
         EventManager.Instance.StartListening("SceneUnloaded", OnSceneUnloaded);
-        EventManager.Instance.StartListening("EnterStage", AutoSaveCombat);
+        EventManager.Instance.StartListening("EnterStage", SaveCombatState);
+        EventManager.Instance.StartListening("StageCompleted", ExitCombatState);
         EventManager.Instance.StartListening("BossStageStart", PrepareBossWave);
         EventManager.Instance.StartListening("WaveCompleted", CompleteWave);
-        EventManager.Instance.StartListening("StageCompleted", CompleteStage);
         EventManager.Instance.StartListening("StartStageTimer", TriggerStageTimer);
         EventManager.Instance.StartListening("PrepareStage", PrepareStage);
         
@@ -35,7 +37,9 @@ public class StageManager : MonoBehaviour
         if (gameData.isNewGame) 
         {
             Debug.Log("Starting a new game. Resetting Stage");
-            isStageActive = false;
+            entryPoint = TransitionManager.Instance.GetGameplaySpawnPoint();
+            stageIsActive = false;
+            gameplayMap.SetActive(false);
             currentWaveIndex = 0;
             stageTimer = 0f;
         }
@@ -44,10 +48,10 @@ public class StageManager : MonoBehaviour
     private void OnDestroy()
     {
         EventManager.Instance.StopListening("SceneUnloaded", OnSceneUnloaded);
-        EventManager.Instance.StopListening("EnterStage", AutoSaveCombat);
+        EventManager.Instance.StopListening("EnterStage", SaveCombatState);
+        EventManager.Instance.StopListening("StageCompleted", ExitCombatState);
         EventManager.Instance.StopListening("BossStageStart", PrepareBossWave);
         EventManager.Instance.StopListening("WaveCompleted", CompleteWave);
-        EventManager.Instance.StopListening("StageCompleted", CompleteStage);
         EventManager.Instance.StopListening("StartStageTimer", TriggerStageTimer);
         EventManager.Instance.StartListening("PrepareStage", PrepareStage);
     }
@@ -64,17 +68,16 @@ public class StageManager : MonoBehaviour
         if (sceneName == "GameScene") CleanupStages();
     }
     
-    private void AutoSaveCombat()
+    private void SaveCombatState()
     { 
-        if (isStageActive) return;
-        isStageActive = true;
+        if (!stageIsActive) return;
+        stageIsActive = true;
         currentWaveIndex = 0;
         stageTimer = 0f;
         wavesInStage = GetWavesInStage(currentStage);
         stageDuration = GetStageDuration(wavesInStage);
         StageUI.Instance.ActivateStageUI(currentStageIndex, currentWaveIndex);
         EventManager.Instance.TriggerEvent("ShowUI");
-        
         GameData currentData = SaveManager.LoadGame();
         SaveManager.SaveGame(currentData);
         
@@ -82,7 +85,21 @@ public class StageManager : MonoBehaviour
         Debug.LogWarning($"Saving game: {currentStageIndex} and {currentWaveIndex}");
     }
     
-    public void InitializeStageConfig(StageConfig selectedStage, bool teleportPlayer = false)
+    public void ExitCombatState()
+    {
+        if (!stageIsActive) return;
+        stageIsActive = false;
+        currentStageIndex++;
+        StageUI.Instance.HandleStageCompleteUI();
+        SpawnManager.Instance.ResetSpawnManager();
+        MapUI.Instance.EnableMapUI();
+        
+        GameData currentData = SaveManager.LoadGame();
+        SaveManager.SaveGame(currentData);
+        Debug.LogWarning($"Stage: {currentStageIndex} completed, upcoming stage: {currentStageIndex + 1}");
+    }
+    
+    public void LoadStageConfig(StageConfig selectedStage)
     {
         if (selectedStage != null)
         {
@@ -94,28 +111,23 @@ public class StageManager : MonoBehaviour
             {
                 foreach (WaveSettings wave in stage.wavesInStage)
                 {
-                    foreach (EnemyTypeRequirement enemyReq in wave.enemyRequirements)
+                    foreach (EnemyPayload enemyReq in wave.enemyPayload)
                     {
                         enemyReq.AutoAssignEnemyType();
                     }
                 }
-
                 Debug.Log($"Initialized '{currentStageConfig.stageName}' StageConfig.");
             }
         }
-        else
-        {
-            Debug.LogError("No stage configuration found or given.");
-        }
-
-        if (teleportPlayer)
-        {
-            EventManager.Instance.TriggerEvent("StageInitialized", selectedStage);
-        }
+        else Debug.LogError("No stage configuration found or given.");
     }
-
+    
     public void PrepareStage()
     {
+        if (stageIsActive) return;
+        stageIsActive = true;
+        gameplayMap.SetActive(true);
+        
         Debug.LogWarning($"Preparing next stage '{currentStageIndex}'.");
         if (currentStageIndex >= currentStageConfig.Stages.Count)
         {
@@ -170,14 +182,14 @@ public class StageManager : MonoBehaviour
             yield return new WaitForSeconds(0.15f);
             currentProgress += 0.15f;
         }
-
+        
         currentProgress = maxProgress;
         StageUI.Instance.UpdateStageUI(currentProgress, maxProgress);
     }
-    
+
     public void PrepareNextWave()
     {
-        if (!isStageActive) return;
+        if (!stageIsActive) return;
         Debug.Log($"wave:{currentWaveIndex}");
         if (currentWaveIndex >= wavesInStage)
         {
@@ -204,21 +216,6 @@ public class StageManager : MonoBehaviour
     {
         currentWaveIndex++;
         PrepareNextWave();
-    }
-    
-    public void CompleteStage()
-    {
-        //isStageComplete = true;
-        isStageActive = false;
-        //currentStageIndex++;
-        currentStageIndex++;
-        StageUI.Instance.HandleStageCompleteUI();
-        SpawnManager.Instance.ResetSpawnManager();
-        MapUI.Instance.EnableMapUI();
-        
-        GameData currentData = SaveManager.LoadGame();
-        SaveManager.SaveGame(currentData);
-        Debug.LogWarning($"Stage: {currentStageIndex} completed, upcoming stage: {currentStageIndex + 1}");
     }
     
     private void HandleBossStageUI()
@@ -264,7 +261,7 @@ public class StageManager : MonoBehaviour
 
     public bool IsStageActive()
     {
-        return isStageActive;
+        return stageIsActive;
     }
     
     public void SetStageProgress(WorldState worldState)
@@ -276,7 +273,7 @@ public class StageManager : MonoBehaviour
             return;
         }
         
-        isStageActive = worldState.isStageActive;
+        stageIsActive = worldState.isStageActive;
         currentWaveIndex = 0;
         stageTimer = 0f;
         currentStageConfig = StageDatabase.Instance.GetStageByName(worldState.currentStageConfigName);
@@ -285,7 +282,7 @@ public class StageManager : MonoBehaviour
         wavesInStage = GetWavesInStage(currentStage);
         stageDuration = GetStageDuration(wavesInStage);
 
-        if (isStageActive)
+        if (stageIsActive)
         {
             EnemyPoolManager.Instance.PrepareEnemyPool(currentStage);
         }
@@ -294,7 +291,7 @@ public class StageManager : MonoBehaviour
     private void CleanupStages()
     {
         currentStage = null;
-        isStageActive = false;
+        stageIsActive = false;
         currentStageIndex = 0;
         currentWaveIndex = 0;
         StopAllCoroutines();

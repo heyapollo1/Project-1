@@ -24,7 +24,7 @@ public class AreaSizeUpgrade : UpgradeData
         // Apply the modifier to player stats
         playerStats.ApplyModifier(areaSizeModifier);
 
-        Debug.Log($"AreaSize upgraded. Current AreaSize: {playerStats.GetStatValue(StatType.AreaSize, 1f)}");
+        Debug.Log($"AreaSize upgraded. Current AreaSize: {playerStats.GetStatValue(StatType.AreaSize)}");
     }
 
     public override void ScaleUpgrade(AttributeManager playerStats)

@@ -6,78 +6,36 @@ using System.Collections.Generic;
 public class StoredLoadoutUI : MonoBehaviour
 {
     [Header("UI Elements")]
-    public StoredWeaponUI leftWeaponUI;
-    public StoredWeaponUI rightWeaponUI;
+    public StoredSlotUI leftStoredUI;
+    public StoredSlotUI rightStoredUI;
     
+    private PlayerLoadout cachedLoadout;
     private int loadoutID;
-    private WeaponLoadout cachedLoadout;
     
-    public void Initialize(WeaponLoadout loadout)
+    public void UpdateStoredLoadout(PlayerLoadout loadout)
     {
+        if (loadout == null) return;
         cachedLoadout = loadout;
-        loadoutID = loadout.loadoutID;
-        UpdateStoredLoadout();
-    }
-    
-    /*public StoredWeaponUI GetStoredWeaponUI(string weaponKey)
-    {
-        if (leftWeaponKey == weaponKey) return leftWeaponUI;
-        if (rightWeaponKey == weaponKey) return rightWeaponUI;
-        return null;
-    }*/
-    
-    public void UpgradeWeaponInStoredLoadout(bool isLeftHand)
-    {
-        if (isLeftHand)
-        {
-            leftWeaponUI.UpgradeWeaponInSlot();
-        }
-        else
-        {
-            rightWeaponUI.UpgradeWeaponInSlot();
-        }
-    }
-    
-    public void UpdateStoredLoadout()
-    {
-        if (cachedLoadout == null)
-        {
-            Debug.LogError("StoredLoadoutUI: No cached loadout.");
-            return;
-        }
-        bool isLeftValid = cachedLoadout.leftWeapon != null && cachedLoadout.leftWeapon.weaponPrefab != null;
-        bool isRightValid = cachedLoadout.rightWeapon != null && cachedLoadout.rightWeapon.weaponPrefab != null;
+        loadoutID = loadout.loadoutIndex;
         
-        if (isLeftValid)
+        if (!cachedLoadout.IsHandFree(true))
         {
-            leftWeaponUI.Initialize(cachedLoadout.leftWeapon, loadoutID, true);
+            if (cachedLoadout.leftHandItem.isWeapon) leftStoredUI.InitializeWeaponUI(cachedLoadout.leftHandItem.weaponScript, loadoutID, true);
+            else leftStoredUI.InitializeItemUI(cachedLoadout.leftHandItem.itemScript, loadoutID, true);
         }
         else
         {
-            Debug.LogWarning($"Left weapon null or prefab missing for loadout {loadoutID}");
-            leftWeaponUI.SetEmpty();
+            leftStoredUI.SetEmpty();
         }
 
-        if (isRightValid)
+        if (!cachedLoadout.IsHandFree(false))
         {
-            rightWeaponUI.Initialize(cachedLoadout.rightWeapon, loadoutID, false);
+            if (cachedLoadout.rightHandItem.isWeapon) rightStoredUI.InitializeWeaponUI(cachedLoadout.rightHandItem.weaponScript, loadoutID, false);
+            else rightStoredUI.InitializeItemUI(cachedLoadout.rightHandItem.itemScript, loadoutID, false);
         }
         else
         {
-            Debug.LogWarning($"Right weapon null or prefab missing for loadout {loadoutID}");
-            rightWeaponUI.SetEmpty();
-        }
-    }
-
-    public void HighlightSlot(WeaponInstance weapon, bool isLeftHand, bool highlight)
-    {
-        if (isLeftHand)
-        {
-            leftWeaponUI.HighlightSlot(highlight);
-        }
-        else
-        {
-            rightWeaponUI.HighlightSlot(highlight);
+            rightStoredUI.SetEmpty();
         }
     }
 }

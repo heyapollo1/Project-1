@@ -34,7 +34,6 @@ public class CameraManager : MonoBehaviour
         GameData gameData = SaveManager.LoadGame();
         if (gameData.isNewGame) 
         {
-            Debug.Log("Starting a new game.");
             InitializeStartingCameras();
         }
     }
@@ -57,7 +56,7 @@ public class CameraManager : MonoBehaviour
 
         cutsceneCamera.GetComponent<CinemachineCamera>().Lens.OrthographicSize = Camera.main.orthographicSize;
         playerCamera.GetComponent<CinemachineCamera>().Lens.OrthographicSize = Camera.main.orthographicSize;
-
+        Debug.LogError("Camera not found on Main Camera!");
         GameManager.Instance.MarkSystemReady("CameraManager");
         EventManager.Instance.TriggerEvent("CamerasInitialized", introCameraPosition);
     }

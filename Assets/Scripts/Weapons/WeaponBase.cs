@@ -8,18 +8,14 @@ public abstract class WeaponBase : MonoBehaviour
     public WeaponInstance weaponInstance;
     public WeaponData weaponData;
     public SpriteRenderer weaponSpriteRenderer;
-    public ActiveWeaponUI weaponUI;
     
     [HideInInspector] public EnemyDetector enemyDetector;
     [HideInInspector] public PlayerController playerController;
     [HideInInspector] public AttributeManager playerAttributes;
     [HideInInspector] public Transform equippedLocation;
-    [HideInInspector]public Vector2 lockedAimDirection;
-    [HideInInspector]public string weaponKey;
-    [HideInInspector]public bool isLeftHand;
+    [HideInInspector] public Vector2 lockedAimDirection;
     
     [HideInInspector] public List<TagType> classTags = new List<TagType>();
-    [HideInInspector] public Dictionary<string, int> statTags = new Dictionary<string, int>();
     
     [HideInInspector] public float currentDamage;
     [HideInInspector] public float currentCooldownRate;
@@ -33,18 +29,11 @@ public abstract class WeaponBase : MonoBehaviour
     private float cooldownTimer = 0f;
     [HideInInspector] public bool isAutoAiming = false;
 
-    public abstract void InitializeWeapon(bool isLeftHand);
+    public abstract void InitializeWeapon();
     public abstract bool CanUseWeapon();
     public abstract void UseWeapon();
     public abstract void UpgradeWeapon();
     public abstract void WeaponReset();
-    
-    public string GenerateWeaponKey(bool isLeftHand)
-    {
-        int loadoutID = WeaponManager.Instance.GetCurrentLoadoutID();
-        string hand = isLeftHand ? "L" : "R";
-        return $"Loadout{loadoutID}_{hand}_{weaponInstance.weaponTitle}";
-    }
     
     public void OnDestroy()
     {
@@ -55,22 +44,22 @@ public abstract class WeaponBase : MonoBehaviour
     {
         if (!isOnCooldown)
         {
-            if (weaponUI == null)
+            if (weaponInstance.assignedUI == null)
             {
                 Debug.Log("weapon UI null");
             }
             isOnCooldown = true;
-            WeaponCooldownManager.Instance.StartCooldown(weaponKey, cooldownDuration);
-            weaponUI.StartCooldownUI(cooldownDuration);
+            WeaponCooldownManager.Instance.StartCooldown(weaponInstance.uniqueID, cooldownDuration);
+            weaponInstance.assignedUI.StartCooldownUI(cooldownDuration);
         }
     }
-
-    private void Update()
+    
+    public void TryUseWeapon()
     {
-        if (isDisabled) return;
-        if (CanUseWeapon())
+        if (isDisabled || isOnCooldown) return;
+        if (CanUseWeapon() && !UIManager.Instance.IsDraggingItem)
         {
-            if (EventSystem.current.IsPointerOverGameObject() || UIManager.IsDraggingUI()) return;
+            if (EventSystem.current.IsPointerOverGameObject()) return;
             UseWeapon();
         }
     }
@@ -119,11 +108,11 @@ public abstract class WeaponBase : MonoBehaviour
     
     public void CompleteCooldown(string key)
     {
-        if (weaponKey != key) return;
+        if (weaponInstance.uniqueID != key) return;
         isOnCooldown = false;
     }
     
-    public bool isWeaponDisabled()
+    public bool IsWeaponDisabled()
     {
         return isDisabled;
     }
@@ -133,14 +122,9 @@ public abstract class WeaponBase : MonoBehaviour
         return isOnCooldown;
     }
     
-    public void DisableWeapon()
+    public void ToggleWeaponState(bool active)
     {
-        isDisabled = true;
-    }
-
-    public void EnableWeapon()
-    {
-        isDisabled = false;
+        isDisabled = active;
     }
     
 }

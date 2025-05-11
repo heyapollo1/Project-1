@@ -489,8 +489,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53fce9d4b78f2456688fb66e5461fad7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  leftWeaponUI: {fileID: 6124927713877362900}
-  rightWeaponUI: {fileID: 2916217767621411179}
+  leftStoredUI: {fileID: 6124927713877362900}
+  rightStoredUI: {fileID: 2916217767621411179}
 --- !u!1 &4562821090224241833
 GameObject:
   m_ObjectHideFlags: 0
@@ -672,6 +672,7 @@ MonoBehaviour:
   uiRarityVisual: {fileID: 3724593023899523636}
   defaultMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   upgradeMaterial: {fileID: 2100000, guid: 26f9f195298534a32bd26a4388d8c996, type: 2}
+  isWeapon: 0
 --- !u!114 &3724593023899523636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -866,6 +867,7 @@ MonoBehaviour:
   uiRarityVisual: {fileID: 5486432628598483327}
   defaultMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   upgradeMaterial: {fileID: 2100000, guid: 26f9f195298534a32bd26a4388d8c996, type: 2}
+  isWeapon: 0
 --- !u!114 &5486432628598483327
 MonoBehaviour:
   m_ObjectHideFlags: 0

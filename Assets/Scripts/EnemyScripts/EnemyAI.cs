@@ -152,8 +152,8 @@ public class EnemyAI : MonoBehaviour
 
     protected virtual void InitializeDrops()
     {
-        DeathEffectManager.Instance.RegisterOnDeathEffect(gameObject, new DropHealingOrb(0.6f));
-        DeathEffectManager.Instance.RegisterOnDeathEffect(gameObject, new DropGold(0.6f));
+        DeathEffectManager.Instance.RegisterOnDeathEffect(gameObject, new DropHealingOrb(1f));
+        DeathEffectManager.Instance.RegisterOnDeathEffect(gameObject, new DropGold(1f));
     }
 
     protected void InitializeMovement()

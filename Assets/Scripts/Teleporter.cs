@@ -2,13 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Teleporter : MonoBehaviour
+public class Teleporter : MonoBehaviour, IInteractable, IDefaultTooltipData
 {
-    public string destinationName;
-
-    private bool isPlayerNearby = false;
-    private bool summonedPortal = false;
-
+    private bool portalTriggered = false;
+    private bool tooltipActive = false;
+    
+    public string GetTitle()
+    {  
+        return "Teleporter";
+    }
+    
+    public string GetDescription()
+    {  
+        return "Press 'C' to start game.";
+    }
+    
+    public Sprite GetIcon() => null;
+    
     private void Awake()
     {
         EventManager.Instance.StartListening("PortalCleanup", ResetTeleporter);
@@ -21,23 +31,20 @@ public class Teleporter : MonoBehaviour
         EventManager.Instance.StopListening("StageInitialized", TeleportPlayer);
     }
     
-    private void Update()
+    public void Interact()
     {
         if (!TutorialManager.Instance.IsTutorialComplete()) return;
+        if (!tooltipActive || portalTriggered) return;
         
-        if (!summonedPortal && isPlayerNearby && Input.GetKeyDown(KeyCode.C))
-        {
-            summonedPortal = true;
-            isPlayerNearby = false;
-            ShowStageChoices();
-        }
+        tooltipActive = false;
+        portalTriggered = true;
+        PlayerItemDetector.Instance.RemoveInteractableItem(this);
+        ShowStageChoices();
     }
-
+    
     private void ShowStageChoices()
     {
-        Debug.Log("Display stage choices");
         List<StageConfig> stages = StageDatabase.Instance.GetStages();
-        Debug.Log($"Display stage choices {stages}");
         if (StageSelectUI.Instance == null)
         {
             Debug.Log("stageselect not available");
@@ -48,32 +55,43 @@ public class Teleporter : MonoBehaviour
     private void TeleportPlayer(StageConfig selectedStage)
     {
         Debug.Log($"Summoned portal to {selectedStage}");
-        TooltipManager.Instance.HideTooltip();
-        AudioManager.Instance.PlayUISound("Upgrade_Select");
         Transform spawnLocation = TransitionManager.Instance.GetGameplaySpawnPoint();
+        
+        AudioManager.Instance.PlayUISound("Player_TeleportDeparture");
         CutsceneManager.Instance.StartCutscene("TeleportStageCutscene", spawnLocation);
     }
 
     private void ResetTeleporter()
     {
-        summonedPortal = false;
+        portalTriggered = false;
+    }
+    
+    public void ShowTooltip()
+    {
+        TooltipManager.Instance.SetWorldTooltip(this, "Default");
+    }
+    
+    public void HideTooltip()
+    {
+        TooltipManager.Instance.ClearWorldTooltip();
     }
     
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("Player") && !summonedPortal)
+        if (!tooltipActive && !portalTriggered && collision.CompareTag("Player"))
         {
-            isPlayerNearby = true;
-            //TooltipManager.Instance.ShowStandardTooltip("Portal", $"Press C to travel to {destinationName}.");
+            Debug.LogWarning("Attempted to open chest " + collision.gameObject.name);
+            tooltipActive = true;
+            PlayerItemDetector.Instance.AddInteractableItem(this);
         }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.CompareTag("Player") && isPlayerNearby && !summonedPortal)
+        if (tooltipActive && collision.CompareTag("Player"))
         {
-            isPlayerNearby = false;
-            TooltipManager.Instance.HideTooltip();
+            tooltipActive = false;
+            PlayerItemDetector.Instance.RemoveInteractableItem(this);
         }
     }
 }

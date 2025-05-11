@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -15,16 +16,20 @@ public class PlayerController : MonoBehaviour
     public DodgeManager dodgeManager;
     public WeaponManager weaponManager;
     public BoxCollider2D playerCollider;
+    // /public LoadoutUIManager loadoutUIManager;
     public LayerMask defaultLayer;
 
     public Vector2 aimDirection { get; private set; }  // Expose aimDirection
     public float footstepInterval = 0.15f;
+    
+    public StatCollection Stats { get; } = new();
     
     [HideInInspector] public Vector2 moveDirection;
     private Vector2 mousePosition;
     private Vector3 shadowOffset;
 
     private Camera sceneCamera;
+    private float moveSpeed;
     private float footstepTimer = 0f;
     private float directionIndex;
     private Transform defaultSpawnPoint; //New game spawn
@@ -32,6 +37,8 @@ public class PlayerController : MonoBehaviour
     [HideInInspector] public bool isDead = false;
     [HideInInspector] public bool isDisabled = false;
 
+    public Transform GetPlayerTransform() => rb.transform;
+    
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -50,7 +57,6 @@ public class PlayerController : MonoBehaviour
 
     void OnDestroy()
     {
-        ResetPlayer();
         EventManager.Instance.StopListening("SceneLoaded", OnSceneLoaded);
         EventManager.Instance.StopListening("SceneUnloaded", OnSceneUnloaded);
         EventManager.Instance.StopListening("KillPlayer", KillPlayer);
@@ -63,6 +69,7 @@ public class PlayerController : MonoBehaviour
         {
             sceneCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
         }
+        weaponManager = WeaponManager.Instance;
     }
 
     public void OnSceneUnloaded(string scene)
@@ -70,7 +77,7 @@ public class PlayerController : MonoBehaviour
         if (scene == "GameScene")
         {
             Debug.Log("reset player called");
-            ResetPlayer();
+            //ResetPlayer();
         }
     }
     
@@ -79,20 +86,15 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (isDead || isDisabled || dodgeManager.IsPlayerDodging() || GameStateManager.Instance.CurrentState != GameState.Playing) return;
-
+        if (isDead || isDisabled || dodgeManager.IsPlayerDodging() || 
+            GameStateManager.Instance.CurrentState != GameState.Playing) return;
+    
         mousePosition = sceneCamera.ScreenToWorldPoint(Input.mousePosition);
         aimDirection = (mousePosition - rb.position).normalized;
-            
-        if (weaponManager.activeLeftWeapon != null)
-        {
-            weaponManager.activeLeftWeapon.weaponBase.WeaponAiming(aimDirection);
-        }
-            
-        if (weaponManager.activeRightWeapon != null)
-        {
-            weaponManager.activeRightWeapon.weaponBase.WeaponAiming(aimDirection);
-        }
+        
+        if (weaponManager == null) Debug.Log("manager null");
+        if (weaponManager.IsWeaponInHand(true)) weaponManager.GetActiveWeapon(true).WeaponAiming(aimDirection);
+        if (weaponManager.IsWeaponInHand(false)) weaponManager.GetActiveWeapon(false).WeaponAiming(aimDirection);
         
         ProcessInputs();
         Animate();
@@ -115,8 +117,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!knockbackManager.IsInKnockback())
         {
-            rb.velocity = new Vector2(moveDirection.x * playerAttributes.currentMoveSpeed, moveDirection.y * playerAttributes.currentMoveSpeed);
-
+            rb.velocity = new Vector2(moveDirection.x * playerAttributes.GetStatValue(StatType.MovementSpeed), moveDirection.y * playerAttributes.GetStatValue(StatType.MovementSpeed));
             if (moveDirection.magnitude > 0)
             {
                 footstepTimer -= Time.deltaTime;
@@ -148,11 +149,11 @@ public class PlayerController : MonoBehaviour
         
         directionToAnimate = aimDirection;
         float angle = Mathf.Atan2(directionToAnimate.y, directionToAnimate.x) * Mathf.Rad2Deg;
-        directionIndex = GetDirectionIndex(angle);  // Convert angle to direction index
+        directionIndex = GetDirectionIndex(angle);  
         animator.SetFloat("Direction", directionIndex);
         playerSprite.flipX = (directionToAnimate.x < 0); // flip player if aiming left
     }
-
+    
     public int GetDirectionIndex(float angle)
     {
         if (angle >= -22.5f && angle < 22.5f) return 4;  // Right
@@ -195,7 +196,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!isDead) return;
         Debug.LogWarning("Player revived");
-        playerAttributes.currentMoveSpeed = playerAttributes.GetStatValue(StatType.MovementSpeed, playerAttributes.baseMoveSpeed);
+        playerAttributes.currentMoveSpeed = playerAttributes.GetStatValue(StatType.MovementSpeed);
         animator.SetTrigger("Revive");
         rb.drag = 0f;
         isDead = false;
@@ -225,9 +226,9 @@ public class PlayerController : MonoBehaviour
         rb.drag = 0f;
         playerAttributes.ResetAllStats();
         PlayerAbilityManager.Instance.ResetAbilities();
-        WeaponManager.Instance.ResetWeaponLoadouts();
+        WeaponManager.Instance.ResetLoadouts();
         UpgradeDatabase.Instance.ResetUpgrades();
-        ItemDatabase.Instance.ResetItems();
+        //ItemDatabase.Instance.ResetItems();
         PlayerCombat.Instance.ResetPlayerCombatEffects();
         AudioManager.Instance.ResetAudio();
         GameManager.Instance.ResetDependencies();

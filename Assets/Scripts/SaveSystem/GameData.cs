@@ -44,21 +44,14 @@ public class PlayerState
     public int xpTotal;
     public int level;
     public int resources;
-
-    public Dictionary<StatType, float> flatBonuses = new();
-    public Dictionary<StatType, float> percentBonuses = new();
-
+    
     public int inventorySlots;
-    public List<string> inventoryWithRarity = new();
     public List<string> upgrades = new();
-
     public List<string> acquiredAbilities = new();
     
     public int currentLoadoutID;
-    //public int currentLoadoutIndex;
-    public List<string> acquiredWeapons = new();
-    public List<WeaponLoadoutData> savedWeaponLoadouts = new List<WeaponLoadoutData>();
-    //public string equippedWeapon;
+    public List<string> inventoryItemData = new();
+    public List<PlayerLoadoutData> savedWeaponLoadouts = new List<PlayerLoadoutData>();
 }
 
 // World State
@@ -70,10 +63,9 @@ public class WorldState
     public bool isMapActive;
     public bool isStageActive;
     public EncounterType currentEncounter;
-    public EncounterData encounterData;
-    public List<string> activeItemNames;
     public List<string> pedestalItems = new List<string>();
-    //public Dictionary<string, int> enemyPools = new Dictionary<string, int>();
+    public List<string> worldItemData = new List<string>();
+    public List<ChestSaveState> savedChestStates = new List<ChestSaveState>();
 }
 
 [Serializable]

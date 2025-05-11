@@ -8,27 +8,30 @@ public class SceneGrid : MonoBehaviour
     public Vector2 gridWorldSize;//example: 40 - divide by diameter(size of grid node)
     public float nodeRadius;//size of each node
     public Node[,] nodeGrid;//[,] is cause the call has [thing,thing] - a comma inbetween. ITS THE PARENT OF NODE!!
-    [HideInInspector] public float nodeDiameter;
     public int gridNodeAmountX { get; private set; }// amt of nodes in x
     public int gridNodeAmountY { get; private set; }// amt of nodes in y
     [HideInInspector] public Vector3 worldBottomLeft;
+    [HideInInspector] public float nodeDiameter;
     public bool showGizmos = true;
-
-
-    public void InitializeGrid(SceneGrid grid)
+    
+    public BoundaryGenerator boundaryGenerator;
+   
+    public void InitializeGrid()
     {
+        boundaryGenerator = GetComponent<BoundaryGenerator>();
         Debug.Log("Grid initializing");
         nodeDiameter = nodeRadius * 2;
-        gridNodeAmountX = Mathf.FloorToInt(gridWorldSize.x / nodeDiameter);//NODE(x) = size of ENTIRE GRID(x) divided by SIZE OF EACH NODE
-        gridNodeAmountY = Mathf.FloorToInt(gridWorldSize.y / nodeDiameter);//(y)
+        gridNodeAmountX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);//NODE(x) = size of ENTIRE GRID(x) divided by SIZE OF EACH NODE
+        gridNodeAmountY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);//(y)
 
         // Adjust gridWorldSize to match actual grid size
         gridWorldSize.x = gridNodeAmountX * nodeDiameter; //ENTIRE GRID(x) = NODE(x) * SIZE OF EACH NODE.
         gridWorldSize.y = gridNodeAmountY * nodeDiameter; //(y)
-        CreateGrid(grid);
+        Debug.Log($"Raw value: {gridWorldSize.x}, Div: {gridWorldSize.x / nodeDiameter}");
+        CreateGrid();
     }
 
-    private void CreateGrid(SceneGrid grid)
+    private void CreateGrid()
     {
         nodeGrid = new Node[gridNodeAmountX, gridNodeAmountY]; //grid created with node amounts.
 
@@ -57,6 +60,11 @@ public class SceneGrid : MonoBehaviour
         }
     }
 
+    public void CreateBoundaries()
+    {
+        boundaryGenerator.GenerateBoundaries(this);
+    }
+
     public Vector3 SnappedPosition(Vector3 worldPosition, Vector2Int obstacleSize)
     {
         // Snap the world position directly to the nearest grid node center
@@ -78,10 +86,6 @@ public class SceneGrid : MonoBehaviour
 
     public Node GetNodeFromWorldPosition(Vector3 worldPosition)
     {
-        //Vector3 snappedPosition = GridManager.Instance.GetSnappedPosition(worldPosition, Vector2Int.one);
-        //int x = Mathf.Clamp(Mathf.RoundToInt((worldPosition.x - worldBottomLeft.x) / nodeDiameter), 0, gridNodeAmountX - 1);
-        //int y = Mathf.Clamp(Mathf.RoundToInt((worldPosition.y - worldBottomLeft.y) / nodeDiameter), 0, gridNodeAmountY - 1);
-
         int x = Mathf.RoundToInt((worldPosition.x - worldBottomLeft.x) / nodeDiameter);
         int y = Mathf.RoundToInt((worldPosition.y - worldBottomLeft.y) / nodeDiameter);
 

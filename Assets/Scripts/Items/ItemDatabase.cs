@@ -9,13 +9,13 @@ public class ItemDatabase : BaseManager
 {
     public static ItemDatabase Instance { get; private set; }
     public override int Priority => 30;
-
-    public List<BaseItem> availableItems = new List<BaseItem>();
-    public HashSet<string> activeItems = new HashSet<string>();
+    
+    private static readonly Dictionary<string, Func<Sprite, Rarity, BaseItem>> itemRegistry = new Dictionary<string, Func<Sprite, Rarity, BaseItem>>();
+    private static readonly Dictionary<string, Rarity> rarityRegistry = new Dictionary<string, Rarity>();
     
     protected override void OnInitialize()
     {
-        RegisterItems();
+        LoadItemsIntoDatabase();
     }
 
     private void Awake()
@@ -23,39 +23,47 @@ public class ItemDatabase : BaseManager
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
+
+    private void LoadItemsIntoDatabase()
+    {
+        RegisterItem("Apple", (icon, rarity) => new AppleItem(icon, rarity), Rarity.Common);
+        RegisterItem("Ghost Wind", (icon, rarity) => new GhostWindItem(icon, rarity), Rarity.Common);
+        RegisterItem("Ruby", (icon, rarity) => new RubyItem(icon, rarity), Rarity.Common);
+        RegisterItem("Clover", (icon, rarity) => new CloverItem(icon, rarity), Rarity.Common);
+        RegisterItem("Sword", (icon, rarity) => new SwordItem(icon, rarity), Rarity.Common);
+        RegisterItem("Axe", (icon, rarity) => new AxeItem(icon, rarity), Rarity.Rare);
+        RegisterItem("Full Metal Jacket", (icon, rarity) => new FullMetalJacketItem(icon, rarity),Rarity.Rare);
+        RegisterItem("Mad Dog", (icon, rarity) => new MadDogItem(icon, rarity), Rarity.Rare);
+        RegisterItem("Witch Point", (icon, rarity) => new WitchPointItem(icon, rarity), Rarity.Rare);
+        RegisterItem("Topaz", (icon, rarity) => new TopazItem(icon, rarity), Rarity.Epic);
+        RegisterItem("Tooth", (icon, rarity) => new ToothItem(icon, rarity), Rarity.Epic);
+        RegisterItem("Candle", (icon, rarity) => new CandleItem(icon, rarity), Rarity.Legendary);
+    }
     
-    private void OnDestroy()
+    public static void RegisterItem(string itemName, Func<Sprite, Rarity, BaseItem> factoryMethod, Rarity rarity)
     {
-        ResetItems();
+        if (!itemRegistry.ContainsKey(itemName))
+        {
+            itemRegistry[itemName] = factoryMethod;
+            rarityRegistry[itemName] = rarity;
+            Debug.LogWarning($"Item '{itemName}' registered in the factory.");
+        }
+        else
+        {
+            Debug.LogWarning($"Item '{itemName}' is already registered in the factory.");
+        }
     }
-
-    private void RegisterItems()
+    
+    public BaseItem CreateRandomItem(StageBracket bracket)
     {
-        ItemFactory.RegisterItem("Apple", (icon, rarity) => new AppleItem(icon, rarity), Rarity.Common);
-        ItemFactory.RegisterItem("Witch Point", (icon, rarity) => new WitchPointItem(icon, rarity), Rarity.Epic);
-        ItemFactory.RegisterItem("Ghost Wind", (icon, rarity) => new GhostWindItem(icon, rarity), Rarity.Common);
-        ItemFactory.RegisterItem("Axe", (icon, rarity) => new AxeItem(icon, rarity), Rarity.Common);
-        ItemFactory.RegisterItem("Ruby", (icon, rarity) => new RubyItem(icon, rarity), Rarity.Common);
-        ItemFactory.RegisterItem("Clover", (icon, rarity) => new CloverItem(icon, rarity), Rarity.Common);
-        ItemFactory.RegisterItem("Mad Dog", (icon, rarity) => new MadDogItem(icon, rarity), Rarity.Rare);
-        ItemFactory.RegisterItem("Tooth", (icon, rarity) => new ToothItem(icon, rarity), Rarity.Epic);
-        ItemFactory.RegisterItem("Sword", (icon, rarity) => new SwordItem(icon, rarity), Rarity.Common);
-        ItemFactory.RegisterItem("Full Metal Jacket", (icon, rarity) => new FullMetalJacketItem(icon, rarity), Rarity.Common);
-        ItemFactory.RegisterItem("Topaz", (icon, rarity) => new TopazItem(icon, rarity), Rarity.Epic);
-        ItemFactory.RegisterItem("Candle", (icon, rarity) => new CandleItem(icon, rarity), Rarity.Rare);
-    }
-
-    public BaseItem GetRandomItem(StageBracket bracket)
-    {
-        Rarity rolledRarity = RollRarity(bracket);
-        Rarity itemDefaultRarity;
-        List<string> allItemNames = ItemFactory.GetAllRegisteredItems();
-
+        Debug.Log($"Creating random item: {itemRegistry.Keys.Count}");
+        List<string> allItemNames = itemRegistry.Keys.ToList(); 
+        RarityChances.GetRarityBracketChances(bracket);
         string randomItemName;
-        BaseItem selectedItem = null;
+        BaseItem selectedItem;
         int attempts = 0;
         const int maxAttempts = 50;
-        
+
         do
         {
             if (attempts >= maxAttempts)
@@ -65,133 +73,44 @@ public class ItemDatabase : BaseManager
             }
 
             attempts++;
-            randomItemName = allItemNames[Random.Range(0, allItemNames.Count)];
-            itemDefaultRarity = ItemFactory.GetDefaultRarity(randomItemName);
-            Debug.Log($"Attempt {attempts}: Trying item {randomItemName} (Default Rarity: {itemDefaultRarity})");
-
-            if (!activeItems.Contains(randomItemName) && IsItemAllowed(randomItemName, itemDefaultRarity, rolledRarity))
+            int randomIndex = Random.Range(0, allItemNames.Count);
+            randomItemName = allItemNames[randomIndex];
+            if (!ItemTracker.Instance.DoesItemExist(randomItemName))
             {
                 break; // Found a valid item, exit loop
             }
-        }
-        while (true);
-        Sprite itemIcon = LoadItemIcon(randomItemName);
-        if (InventoryManager.Instance.HasItem(randomItemName))
-        {
-            Rarity? playerRarity = InventoryManager.Instance.GetOwnedItemRarity(randomItemName);
-            rolledRarity = playerRarity.Value;
-            selectedItem = ItemFactory.CreateItem(randomItemName, itemIcon, rolledRarity);
-        }
-        else
-        {
-            Debug.LogWarning($"{randomItemName}, rarity: ({itemDefaultRarity}) is not owned by player");
-            selectedItem = ItemFactory.CreateItem(randomItemName, itemIcon, rolledRarity);
-        }
+        } while (true);
         
+        selectedItem = CreateItem(randomItemName);
+
         Debug.LogWarning($"{selectedItem.itemName} gotten from the database");
         return selectedItem;
     }
     
-    public Sprite LoadItemIcon(string itemName)
+    public static BaseItem CreateItem(string itemName)
+    {
+        Debug.Log($"Creating random item amount?  {itemRegistry.Count}");
+        Debug.Log($"Creating random item:have?  {itemRegistry.ContainsKey(itemName)}");
+        if (itemRegistry.TryGetValue(itemName, out var factoryMethod))
+        {
+            return factoryMethod.Invoke(LoadItemIcon(itemName), GetItemRarity(itemName));
+        }
+        Debug.LogError($"Item '{itemName}' not found in factory.");
+        return null;
+    }
+    
+    public static Rarity GetItemRarity(string itemName)
+    {
+        if (rarityRegistry.TryGetValue(itemName, out var itemRarity))
+        {
+            return itemRarity;
+        }
+        Debug.LogError($"ItemFactory: Default rarity not found for {itemName}");
+        return Rarity.Common; // Fallback
+    }
+    
+    public static Sprite LoadItemIcon(string itemName)
     {
         return Resources.Load<Sprite>($"Items/{itemName.Replace(" ", "")}Icon");
     }
-    
-    private Rarity RollRarity(StageBracket bracket)
-    {
-        Debug.LogWarning("RollingRarity");
-        Dictionary<Rarity, float> chances = RarityChances.GetRarityBracketChances(bracket);
-        float randomValue = Random.value;
-        float cumulativeProbability = 0f;
-
-        foreach (var rarityChance in chances)
-        {
-            cumulativeProbability += rarityChance.Value;
-            if (randomValue <= cumulativeProbability)
-            {
-                return rarityChance.Key;
-            }
-        }
-        Debug.LogWarning("Rarity roll failed, defaulting to Bronze.");
-        return Rarity.Common; // Fallback rarity
-    }
-    
-    private bool IsItemAllowed(string itemName, Rarity itemDefaultRarity, Rarity rolledRarity)
-    {
-        if (rolledRarity < itemDefaultRarity)
-        {
-            Debug.LogWarning($"{itemName}: Default Rarity ({itemDefaultRarity}) is higher than rolled rarity ({rolledRarity}).");
-            return false;
-        }
-        Debug.LogWarning($"{itemName} found, accessing..");
-        return true;
-    }
-    
-    public void RegisterActiveItem(string itemName)
-    {
-        if (!activeItems.Contains(itemName))
-        {
-            activeItems.Add(itemName);
-        }
-    }
-    
-    public void UnregisterActiveItem(string itemName)
-    {
-        if (activeItems.Count <= 0) return;
-        
-        List<string> itemsToRemove = new List<string>();
-
-        foreach (string item in activeItems)
-        {
-            if (item == itemName)
-            {
-                itemsToRemove.Add(item);
-            }
-        }
-        
-        foreach (string item in itemsToRemove)
-        {
-            activeItems.Remove(item);
-        }
-    }
-
-    public List<string> GetActiveItemNames() //save state
-    {
-        List<string>itemsInWorld = new List<string>();
-        
-        foreach (var item in activeItems)
-        {
-            itemsInWorld.Add(item);
-        }
-        activeItems.Clear();
-        availableItems.Clear();
-        return itemsInWorld;
-    }
-    
-    public void LoadActiveItemState(WorldState state)
-    {
-        //LoadItems();
-        if (state != null)
-        {
-            Debug.Log("Loading saved item states...");
-            foreach (var itemName in state.activeItemNames)
-            {
-                activeItems.Add(itemName);
-            }
-        }
-        else
-        {
-            Debug.LogWarning("No active item data found. ");
-        }
-    }
-    
-    public void ResetItems()
-    {
-        activeItems.Clear();
-        availableItems.Clear();
-        //ItemFactory.ClearFactory(); 
-        Debug.LogWarning($"Itemdatabase reset");
-    }
-
 }
-

@@ -102,7 +102,7 @@ public class Obstacle : MonoBehaviour
             (obstacleSize.x - 1) * nodeDiameter / 2,
             (obstacleSize.y - 1) * nodeDiameter / 2,
             0);
-
+    
         for (int x = 0; x < obstacleSize.x; x++)
         {
             for (int y = 0; y < obstacleSize.y; y++)

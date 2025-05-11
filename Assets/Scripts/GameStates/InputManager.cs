@@ -7,6 +7,9 @@ public class InputManager : BaseManager
     public static InputManager Instance { get; private set; }
 
     public override int Priority => 20;
+    
+    private float lastPickupTime = -999f;
+    private const float pickupCooldown = 0.25f; // 200ms
 
     protected override void OnInitialize()
     {
@@ -20,6 +23,11 @@ public class InputManager : BaseManager
 
     private void Update()
     {
+        if (Time.time - lastPickupTime < pickupCooldown)
+        {
+            return;
+        }
+        
         if (GameStateManager.Instance.CurrentState == GameState.GameOver || GameStateManager.Instance.CurrentState == GameState.MainMenu) return;
 
         if (GameStateManager.Instance.CurrentState == GameState.Playing)
@@ -42,45 +50,67 @@ public class InputManager : BaseManager
         {
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                lastPickupTime = Time.time; 
                 UIManager.Instance.ShowPauseMenu();
                 Debug.Log("Pause triggered");
             }
         }
         else
         {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                lastPickupTime = Time.time; 
+                UIManager.Instance.ShowPauseMenu();
+                Debug.Log("Pause triggered");
+            }
+            
+            if (Input.GetMouseButton(0))
+            {
+                WeaponManager.Instance.GetActiveWeapon(true)?.TryUseWeapon();
+            }
+            
+            if (Input.GetMouseButton(1))
+            {
+                WeaponManager.Instance.GetActiveWeapon(false)?.TryUseWeapon();
+            }
+            
             if (Input.GetKeyDown(KeyCode.C))
             {
-                Debug.Log("C");
                 IInteractable currentTooltip = TooltipManager.Instance.GetActiveTooltip();
-                Debug.Log("C");
                 if (currentTooltip == null) return;
-                Debug.Log($"C: {currentTooltip}");
+                lastPickupTime = Time.time;
                 currentTooltip.Interact();
             }
             
-            if (Input.GetKeyDown(KeyCode.R) &&
+            /*if (Input.GetKeyDown(KeyCode.R) &&
                 EncounterManager.Instance.GetCurrentEncounterType() == EncounterType.Shop)
             {
-                ShopManager.Instance.RerollShop();
-            }
+                lastPickupTime = Time.time;
+                ShopEncounter shopEncounter = EncounterManager.Instance.GetCurrentEncounter();
+                shopEncounter.RerollShop();
+            }*/
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                lastPickupTime = Time.time;
                 DodgeManager.Instance.TriggerDodge();
             }
 
             if (Input.GetKeyDown(KeyCode.L))
             {
+                lastPickupTime = Time.time;
                 XPManager.Instance.GetFreeXP(50);
             }
 
             if (Input.GetKeyDown(KeyCode.H))
             {
+                lastPickupTime = Time.time;
                 PlayerHealthManager.Instance.AdjustHealthByPercentage(0.2f);
             }
 
             if (Input.GetKeyDown(KeyCode.J))
             {
+                lastPickupTime = Time.time;
                 PlayerHealthManager.Instance.AdjustHealthByPercentage(-0.2f);
             }
         }
@@ -90,6 +120,7 @@ public class InputManager : BaseManager
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
+            lastPickupTime = Time.time;
             UIManager.Instance.ShowPauseMenu();
             Debug.Log("Pause triggered");
         }
@@ -99,6 +130,7 @@ public class InputManager : BaseManager
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
+            lastPickupTime = Time.time;
             PauseMenu.Instance.OnResumeClicked();
         }
     }

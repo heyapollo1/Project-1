@@ -18,13 +18,13 @@ public class ScorchUpgrade : UpgradeData
     {
         // Create a new modifier for attack speed
         StatModifier scorchModifier = new StatModifier(
-            StatType.Scorch, flatBonus: 10, percentBonus: scorchWidthIncrease
+            StatType.BurnChance, flatBonus: 10, percentBonus: scorchWidthIncrease
         );
 
         // Apply the modifier to player stats
         playerStats.ApplyModifier(scorchModifier);
 
-        Debug.Log($"Scorch upgraded. Current width: {playerStats.GetStatValue(StatType.Scorch, 1f)}");
+        Debug.Log($"Scorch upgraded. Current width: {playerStats.GetStatValue(StatType.BurnChance)}");
     }
 
     public override void ScaleUpgrade(AttributeManager playerStats)

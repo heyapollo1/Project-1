@@ -4,12 +4,10 @@ using UnityEngine;
 
 public class DropHealingOrb : IOnDeathEffect
 {
-    //private GameObject healingOrbPrefab;
     private float dropChance;
 
     public DropHealingOrb(float dropChance)
     {
-        //this.healingOrbPrefab = healingOrbPrefab;
         this.dropChance = dropChance;
     }
 

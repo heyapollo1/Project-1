@@ -5,40 +5,64 @@ using UnityEngine;
 public class EncounterManager : MonoBehaviour
 {
     public static EncounterManager Instance;
-
+    
+    public EncounterData encounterData;
     private EncounterType encounterType = EncounterType.None;
-    private EncounterData encounterData;
+    private BaseEncounter currentEncounter;
+    private EncounterPool encounterPool;
     private bool isInEncounter = false;
     
-    public void Initialize()
-    {
-        EventManager.Instance.StartListening("EnterEncounter", AutoSaveEncounter);
-    }
-    
-    private void OnDestroy()
-    {
-        EventManager.Instance.StopListening("EnterEncounter", AutoSaveEncounter);
-    }
+    public EncounterType GetCurrentEncounterType() => encounterType;
+    public BaseEncounter GetCurrentEncounter() => currentEncounter;
+    public bool IsEncounterActive() => isInEncounter;
+
+    private Dictionary<EncounterType, BaseEncounter> encounterList = new Dictionary<EncounterType, BaseEncounter>();
     
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+        
+        EventManager.Instance.StartListening("TriggerEncounter", StartCurrentEncounter);
+    }
+
+    private void OnDestroy()
+    {
+        EventManager.Instance.StopListening("TriggerEncounter", StartCurrentEncounter);
+    }
+
+    private void StartCurrentEncounter()
+    {
+        currentEncounter.EnterEncounter();
+    }
+
+    public void RegisterEncounter(BaseEncounter encounter)
+    {
+        if (encounterList.ContainsKey(encounter.encounterType))
+        {
+            Debug.LogWarning($"Duplicate encounter type: {encounter.encounterType}");
+            return;
+        }
+        encounterList[encounter.encounterType] = encounter;
+        Debug.Log($"Registered encounter: {encounter.encounterType} ({encounter.name})");
     }
     
-    private void AutoSaveEncounter(EncounterData encounter)
+    public void SaveEncounterState(EncounterData encounter)
     {
-        Debug.LogWarning("Saving Encounter Data");
+        Debug.Log($"Saving Encounter State: {encounter.name}");
         if (isInEncounter) return;
         isInEncounter = true;
-        encounterData = encounter;
-        encounterType = encounterData.encounterType;
-        MapUI.Instance.EnableMapUI();
-        EventManager.Instance.TriggerEvent("ShowUI");
-        
-        GameData currentData = SaveManager.LoadGame(); //Save instance, automatic
-        SaveManager.SaveGame(currentData);
-        Debug.Log($"Encounter Saved: {PlayerManager.Instance.playerInstance.transform.position}");
+        encounterType = encounter.encounterType;
+        currentEncounter = GetEncounterFromType(encounterType);
+    }
+    
+    public void ExitEncounterState()
+    {
+        Debug.LogWarning("Saving Encounter Data");
+        if (!isInEncounter) return;
+        isInEncounter = false;
+        encounterType = EncounterType.None;
+        currentEncounter = null;
     }
     
     public List<EncounterData> GetEventChoices()
@@ -60,28 +84,31 @@ public class EncounterManager : MonoBehaviour
         
         return selectedEncounters;
     }
+
+    public BaseEncounter GetEncounterFromType(EncounterType encounterType)
+    {
+        if (encounterList.ContainsKey(encounterType)) return encounterList[encounterType];
+        return null;
+    }
     
     public void LoadEncounterFromSave(WorldState worldState) // load state
     {
-        if (StageManager.Instance.isStageActive)
+        if (StageManager.Instance.stageIsActive)
         {
-            Debug.Log("Stage active, is not in encounter");
             isInEncounter = false;
             return;
         }
         Debug.Log($"Loading Encounter {worldState.currentEncounter}");
         encounterType = worldState.currentEncounter;
-        encounterData = worldState.encounterData;
         
         switch (worldState.currentEncounter)
         {
             case EncounterType.Shop:
-                isInEncounter = true;
-                ShopManager.Instance.LoadShopState(worldState);
-                break;
+                ShopEncounter.Instance.LoadEncounterState(worldState);
+                break; 
 
             case EncounterType.Treasure:
-                //TreasureManager.Instance.StartEncounter();
+                TreasureEncounter.Instance.LoadEncounterState(worldState);
                 break;
 
             case EncounterType.Victory:
@@ -98,20 +125,5 @@ public class EncounterManager : MonoBehaviour
     public void IsInEncounter(bool isInEncounter)
     {
         this.isInEncounter = isInEncounter;
-    }
-    
-    public bool CheckIfEncounterActive()
-    {
-        return isInEncounter;
-    }
-    
-    public EncounterType GetCurrentEncounterType() // save state
-    {
-        return encounterType;
-    }
-    
-    public EncounterData GetCurrentEncounterData() // save state
-    {
-        return encounterData;
     }
 }

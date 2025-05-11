@@ -22,6 +22,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI healthText;
     [SerializeField] private TextMeshProUGUI playerLevelText;
     
+    private bool isDraggingItem = false;
+    public bool IsDraggingItem => isDraggingItem;
+    
     public void Initialize()
     {
         Debug.LogWarning("UIManager Initialized");
@@ -35,7 +38,7 @@ public class UIManager : MonoBehaviour
         EventManager.Instance.StartListening("UpdateLevelUI", UpdateLevelUI);
         EventManager.Instance.StartListening("HealthChanged", UpdateHealthUI);
         EventManager.Instance.StartListening("CurrencyChanged", UpdateCurrencyUI);
-        DodgeManager.Instance.OnCooldownUpdated += OnDodgeCooldownUpdated;
+        //DodgeManager.Instance.OnCooldownUpdated += OnDodgeCooldownUpdated;
     }
 
     private void OnDestroy()
@@ -51,7 +54,7 @@ public class UIManager : MonoBehaviour
         EventManager.Instance.StopListening("UpdateLevelUI", UpdateLevelUI);
         EventManager.Instance.StopListening("HealthChanged", UpdateHealthUI);
         EventManager.Instance.StopListening("CurrencyChanged", UpdateCurrencyUI);
-        DodgeManager.Instance.OnCooldownUpdated -= OnDodgeCooldownUpdated;
+        //DodgeManager.Instance.OnCooldownUpdated -= OnDodgeCooldownUpdated;
     }
 
     void Awake()
@@ -60,23 +63,21 @@ public class UIManager : MonoBehaviour
         else Destroy(gameObject);
     }
     
+    public void SetDragging(bool dragging)
+    {
+        isDraggingItem = dragging;
+    }
+    
     private void HideAllUI()
     {
+        Debug.LogWarning("UIManager HideAllUI");
         sceneUI.SetActive(false);
     }
 
     private void ShowAllUI()
     {
+        Debug.LogWarning("UIManager ShowAllUI");
         sceneUI.SetActive(true);
-    }
-    
-    public static bool IsDraggingUI()
-    {
-        if (InventoryItemUI.draggedItem != null || ActiveWeaponUI.draggedWeapon != null)
-        {
-            return true;
-        }
-        return false;
     }
     
     public void ShowPauseMenu()

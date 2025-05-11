@@ -16,31 +16,31 @@ public class WeaponCooldownManager : MonoBehaviour
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
        //ApplyWeaponCooldownManager();
-        //Debug.LogError("ACTIVATING WEAPON COOLDOWN MANAGER");
     }
 
-    public void StartCooldown(string weaponKey, float cooldownDuration)
+    public void StartCooldown(string id, float cooldownDuration)
     {
-        if (!cooldownTimers.ContainsKey(weaponKey) || cooldownTimers[weaponKey] <= 0)
+        if (!cooldownTimers.ContainsKey(id) || cooldownTimers[id] <= 0)
         {
-            cooldownTimers[weaponKey] = cooldownDuration;
-            totalCooldowns[weaponKey] = cooldownDuration;
-            StartCoroutine(CooldownCoroutine(weaponKey));
+            cooldownTimers[id] = cooldownDuration;
+            totalCooldowns[id] = cooldownDuration;
+            StartCoroutine(CooldownCoroutine(id));
         }
     }
 
-    private IEnumerator CooldownCoroutine(string weaponKey)
+    private IEnumerator CooldownCoroutine(string id)
     {
-        while (cooldownTimers[weaponKey] > 0)
+        while (cooldownTimers[id] > 0)
         {
-            cooldownTimers[weaponKey] -= Time.deltaTime;
-            OnCooldownUpdated?.Invoke(weaponKey, cooldownTimers[weaponKey], totalCooldowns[weaponKey]);
-
+            cooldownTimers[id] -= Time.deltaTime;
+            
+            OnCooldownUpdated?.Invoke(id, cooldownTimers[id], totalCooldowns[id]);
+            //Debug.Log($"{id} cooldown: {cooldownTimers[id]:F1}s remaining");
             yield return null;
         }
-        cooldownTimers[weaponKey] = 0;
-        totalCooldowns[weaponKey] = 0;
-        EventManager.Instance.TriggerEvent("CooldownComplete", weaponKey);
+        cooldownTimers[id] = 0;
+        totalCooldowns[id] = 0;
+        EventManager.Instance.TriggerEvent("CooldownComplete", id);
     }
     
     public float GetTotalCooldownTime(string weaponKey)

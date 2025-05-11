@@ -8,77 +8,33 @@ public class MadDogItem : BaseItem
     {
         TagType.Junk
     };
-    
-    private static readonly Dictionary<Rarity, List<StatModifier>> rarityModifiers = new()
-    {
-        { Rarity.Rare, new List<StatModifier> { new (StatType.BurnChance, 20f) } },
-        { Rarity.Epic, new List<StatModifier> { new (StatType.BurnChance, 40f) } },
-        { Rarity.Legendary, new List<StatModifier> { new (StatType.BurnChance, 60f) } }
-    };
+
+    private float bleedChance;
     
     public MadDogItem(Sprite madDogIcon, Rarity rarity) : base(
-        "Mad Dog", madDogIcon, 50, ItemType.Simple, rarity, 
-        rarityModifiers[rarity])
+        "Mad Dog", madDogIcon, 50, ItemType.Inventory, rarity, 
+        new List<StatModifier> { new (StatType.BleedChance, 10f)})
     {
+        bleedChance = 10f;
         UpdateDescription();
     }
     
-    public override void Upgrade()
+    public override string UpdateDescription()
     {
-        if (currentRarity < Rarity.Legendary)
-        {
-            currentRarity++;
-            value = Mathf.RoundToInt(value * GetRarityMultiplier());
-            if (rarityModifiers.ContainsKey(currentRarity))
-            {
-                modifiers = rarityModifiers[currentRarity];
-            }
-            else
-            {
-                Debug.LogError($"No modifiers found for upgraded Candle rarity {currentRarity}.");
-            }
-            UpdateDescription();
-        }
+        return description = $"{(bleedChance)}% to inflict Bleed.";
     }
     
-    public bool TryGetNextUpgradeModifier(out StatModifier nextModifier)
+    public override void Apply()
     {
-        if (currentRarity < Rarity.Legendary)
-        {
-            Rarity nextRarity = currentRarity + 1;
-            if (rarityModifiers.TryGetValue(nextRarity, out var nextMods))
-            {
-                nextModifier = nextMods[0];
-                return true;
-            }
-        }
-        nextModifier = null;
-        return false;
-    }
-    
-    public override string UpdateDescription(bool showUpgrade = false)
-    {
-        float currentBonus = modifiers[0].flatBonus;
-        string upgradePart = "";
-
-        if (showUpgrade && TryGetNextUpgradeModifier(out var next))
-        {
-            upgradePart = $" >> <color=#00FF00>{next.flatBonus}%</color>";
-        }
-        return description = $"{(currentBonus):0}%{upgradePart} to inflict Bleed.";
-    }
-    
-    public override void Apply(AttributeManager playerStats)
-    {
-        base.Apply(playerStats);
+        base.Apply();
         
         EventManager.Instance.TriggerEvent("FXPoolUpdate", "BleedingFX", 10);
         Debug.Log("BleedingFX added to FX pool.");
     }
     
-    public override void Remove(AttributeManager playerStats)
+    public override void Remove()
     {
-        base.Remove(playerStats);
+        base.Remove();
         FXManager.Instance.RemovePool("BleedingFX");
         Debug.Log("BleedingFX removed from FX pool.");
     }

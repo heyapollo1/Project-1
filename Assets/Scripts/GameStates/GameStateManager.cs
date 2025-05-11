@@ -74,6 +74,5 @@ public class GameStateManager : BaseManager
                 Time.timeScale = 0.3f;
                 break;
         }
-        Debug.Log($"GameState changed to {state}, Time.timeScale = {Time.timeScale}");
     }
 }

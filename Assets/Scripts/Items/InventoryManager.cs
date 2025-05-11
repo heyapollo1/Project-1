@@ -1,207 +1,231 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class InventoryManager : MonoBehaviour
 {
     public static InventoryManager Instance { get; private set; }
-    public int inventorySlots = 8;
+    public int inventorySlots = 4;
     public GameObject itemDropPrefab;
-    private Dictionary<string, BaseItem> itemsInInventory = new(); // Stores active item objects
-    private Dictionary<string, Rarity> savedItemRarities = new(); //stores rarity for saving/loading
-
-    private InventoryUI inventoryUI;
-
+    public ItemTracker itemTracker;
+    
     public void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
     
-    public void AddItem(BaseItem selectedItem, bool isUpgrade)
+    public void Start()
     {
-        if (isUpgrade)
+        itemTracker = ItemTracker.Instance;
+    }
+    
+    public bool isThereSpaceInInventory()
+    { 
+        Debug.Log($"Inventory item count: {itemTracker.GetInventoryItemCount()}, slots left: {inventorySlots}");
+        return itemTracker.GetInventoryItemCount() < inventorySlots;
+    }
+    
+    public void AddItemToInventory(ItemPayload item, int slotIndex = -1)
+    {
+        bool toTargetSlot = slotIndex != -1;
+        
+        if (item.isWeapon)
         {
-            InventoryUI.Instance.UpgradeItemInInventorySlot(selectedItem);
-            itemsInInventory[selectedItem.itemName] = selectedItem;
-            savedItemRarities[selectedItem.itemName] = selectedItem.currentRarity;
-            Debug.Log($"Upgraded {selectedItem.itemName} to {selectedItem.currentRarity}.");
-        }
-        else if (DoesInventoryHaveSpace())
-        {
-            savedItemRarities.Add(selectedItem.itemName, selectedItem.currentRarity);
-            itemsInInventory.Add(selectedItem.itemName, selectedItem);
-            //itemsInInventory[selectedItem.itemName] = selectedItem;
-            //savedItemRarities[selectedItem.itemName] = selectedItem.currentRarity;
-            selectedItem.Apply(AttributeManager.Instance);
-            InventoryUI.Instance.PlaceItemIntoInventory(selectedItem);
-            Debug.Log($"Added new item: {selectedItem.itemName} ({selectedItem.currentRarity}).");
-            EventManager.Instance.TriggerEvent("ItemInteraction", selectedItem.itemName);
+            WeaponInstance weaponInstance = item.weaponScript;
+            InventoryUI.Instance.SetItemInSlot(toTargetSlot ? slotIndex : InventoryUI.Instance.GetFreeInventorySlot(), null, weaponInstance);
+            itemTracker.AssignItemToTracker(item, ItemLocation.Inventory, toTargetSlot ? slotIndex : InventoryUI.Instance.GetFreeInventorySlot());
+            EventManager.Instance.TriggerEvent("ItemInteraction", weaponInstance.weaponTitle);
+            Debug.Log($"Added WEAPON: {weaponInstance.weaponTitle} to inventory");
         }
         else
         {
-            Debug.Log("Not enough inventory space.");
-            return;
+            BaseItem baseItem  = item.itemScript;
+            item.itemScript.Apply();
+            InventoryUI.Instance.SetItemInSlot(toTargetSlot ? slotIndex : InventoryUI.Instance.GetFreeInventorySlot(), baseItem);
+            itemTracker.AssignItemToTracker(item, ItemLocation.Inventory, toTargetSlot ? slotIndex : InventoryUI.Instance.GetFreeInventorySlot());
+            EventManager.Instance.TriggerEvent("ItemInteraction", baseItem.itemName);
+            Debug.Log($"Added ITEM: {baseItem.itemName} to inventory");
         }
     }
     
-    public void DiscardItem(BaseItem selectedItem)
-    {
-        if (itemsInInventory.ContainsKey(selectedItem.itemName))
-        {
-            itemsInInventory.Remove(selectedItem.itemName);
-            savedItemRarities.Remove(selectedItem.itemName);
-            selectedItem.Remove(AttributeManager.Instance);
+     public void HandleInventoryPayload(UISwapPayload payload, int targetSlotIndex, int sourceSlotIndex, bool isFromHand = false, bool toEmptySlot = false)
+     { 
+        ItemPayload sourcePayload = payload.sourceItem;
+        ItemPayload targetPayload = payload.targetItem;
+        bool isSourceAWeapon = sourcePayload.isWeapon;
+        bool isTargetAWeapon = targetPayload.isWeapon;
 
+        var weaponManager = WeaponManager.Instance;
+        var inventoryUI = InventoryUI.Instance;
+        
+        if (toEmptySlot) 
+        {
+            if (isFromHand)
+            {
+                Debug.Log("Adding item to inventory from HAND");
+                weaponManager.DeleteItemFromLoadouts(isSourceAWeapon ? sourcePayload.weaponScript : null,
+                    isSourceAWeapon ? null : sourcePayload.itemScript);
+                AddItemToInventory(sourcePayload, targetSlotIndex);
+            }
+            else
+            {
+                inventoryUI.GetInventorySlotByIndex(sourceSlotIndex).Clear();
+                inventoryUI.SetItemInSlot(targetSlotIndex, isSourceAWeapon ? null : sourcePayload.itemScript, isSourceAWeapon ? sourcePayload.weaponScript : null);
+            }
+        }
+        else
+        {
+            if (isFromHand)
+            {
+                DeleteItemFromInventory(isTargetAWeapon ? targetPayload.weaponScript : null, isTargetAWeapon ? null : targetPayload.itemScript);
+                ItemLocation location = itemTracker.GetLocationByID(isSourceAWeapon ? sourcePayload.weaponScript?.uniqueID : sourcePayload.itemScript?.uniqueID);
+                
+                weaponManager.DeleteItemFromLoadouts(isSourceAWeapon ? sourcePayload.weaponScript : null,
+                    isSourceAWeapon ? null : sourcePayload.itemScript);
+                
+                AddItemToInventory(sourcePayload, targetSlotIndex);
+                weaponManager.Equip(location, targetPayload);
+            }
+            else
+            {
+                inventoryUI.GetInventorySlotByIndex(sourceSlotIndex).Clear();
+                inventoryUI.GetInventorySlotByIndex(targetSlotIndex).Clear();
+                inventoryUI.SetItemInSlot(targetSlotIndex, isSourceAWeapon ? null : sourcePayload.itemScript, isSourceAWeapon ? sourcePayload.weaponScript : null);
+                inventoryUI.SetItemInSlot(sourceSlotIndex, isTargetAWeapon ? null : targetPayload.itemScript, isTargetAWeapon ? targetPayload.weaponScript : null);
+            }
+        }
+    }
+     
+    public void DropInventoryObject(WeaponInstance selectedWeapon = null, BaseItem selectedItem = null)
+    {
+        bool isWeapon = selectedItem == null;
+        string itemID = isWeapon ? selectedWeapon?.uniqueID : selectedItem.uniqueID;
+        
+        if (itemID != null)
+        {
             Vector2 dropPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            
-            // Spawn item in the world
-            GameObject dropped = Instantiate(itemDropPrefab, dropPosition, Quaternion.identity);
-            ItemDrop droppedItem = dropped.GetComponent<ItemDrop>();
-            if (droppedItem != null)
+            GameObject dropObj = Instantiate(itemDropPrefab, dropPosition, Quaternion.identity);
+            ItemDrop droppedItem = dropObj.GetComponent<ItemDrop>();
+            if (isWeapon)
             {
-                droppedItem.DropItemReward(selectedItem, PlayerController.Instance.transform);
+                var weaponPayload = new ItemPayload()
+                {
+                    weaponScript =  selectedWeapon,
+                    itemScript = null,
+                    isWeapon = true
+                };
+                droppedItem.DropItemReward(PlayerController.Instance.transform, weaponPayload);
+                ItemTracker.Instance.AssignItemToTracker(weaponPayload, ItemLocation.World, -1, -1, dropObj);
             }
-
-            Debug.Log($"Dropped {selectedItem.itemName} into world at {dropPosition}.");
-        }
-        
-        if (itemsInInventory.ContainsKey(selectedItem.itemName))
-        {
-            itemsInInventory.Remove(selectedItem.itemName);
-            savedItemRarities.Remove(selectedItem.itemName);
-            selectedItem.Remove(AttributeManager.Instance);
-            Debug.Log($"Removed {selectedItem.itemName} from inventory.");
-        }
-        
-        EventManager.Instance.TriggerEvent("ItemInteraction", selectedItem.itemName);
-    }
-
-    public bool DoesInventoryHaveSpace()
-    {
-        return itemsInInventory.Count < inventorySlots;
-    }
-    
-    public bool HasItem(string itemName)
-    {
-        Debug.Log($"Checking for item: '{itemName}' in inventory.");
-    
-        foreach (var key in itemsInInventory.Keys)
-        {
-            Debug.Log($"Inventory contains: '{key}'");
-        }
-
-        bool exists = itemsInInventory.ContainsKey(itemName);
-        return exists;
-    }
-    
-    public Rarity? GetOwnedItemRarity(string itemName)
-    {
-        foreach (var item in savedItemRarities)
-        {
-            if (item.Key == itemName) // Check if the item exists in inventory
+            else
             {
-                return item.Value; // Return its rarity
+                var itemPayload = new ItemPayload()
+                {
+                    weaponScript =  null,
+                    itemScript = selectedItem,
+                    isWeapon = false
+                };
+                
+                droppedItem.DropItemReward(PlayerController.Instance.transform, itemPayload);
+                selectedItem.Remove();
+                ItemTracker.Instance.AssignItemToTracker(itemPayload, ItemLocation.World, -1, -1, dropObj);
+            }
+            Debug.Log($"Dropped {itemID} into world at {dropPosition}.");
+        }
+        itemTracker.UnassignItemFromTracker(itemID);
+    }
+
+    public void DeleteItemFromInventory(WeaponInstance weapon = null, BaseItem item = null)
+    {
+        bool isWeapon = item == null;
+        if (isWeapon)
+        {
+            InventoryUI.Instance.GetInventorySlotByItemID(weapon.uniqueID).Clear();
+        }
+        else
+        {
+            item.Remove();
+            InventoryUI.Instance.GetInventorySlotByItemID(item.uniqueID).Clear();
+        }
+        itemTracker.UnassignItemFromTracker(isWeapon ? weapon.uniqueID : item.uniqueID);
+    }
+    
+    public void ApplyInventoryBonuses()//Add game/stat logic
+    {
+        if (ItemTracker.Instance.GetPlayerItems().Count > 0)
+        {
+            foreach (var item in itemTracker.GetPlayerItems())
+            {
+                item.Apply();
+                Debug.LogWarning($"Item: '{item.itemName}' applied on load");
             }
         }
-        return null;
     }
     
-    public void ApplyItemBonuses()
+    public void LoadInventoryFromSave(PlayerState playerState)
     {
-        foreach (var item in itemsInInventory.Values)
+        Debug.LogWarning("No saved inventory found!");
+        if (playerState.inventoryItemData.Count == 0)
         {
-            item.Apply(AttributeManager.Instance);
-            Debug.LogWarning($"Item: '{item.itemName}' (Rarity: {item.currentRarity}) applied");
-        }
-    }
-    
-    public void LoadInventoryFromSave(PlayerState playerState) //load state
-    {
-        Debug.Log("Loading Items In Inventory");
-        if (playerState.inventoryWithRarity.Count == 0)
-        {
-            Debug.LogWarning("No saved inventory found! Inventory might not be saving correctly.");
+            Debug.LogWarning("No saved inventory found!");
             return;
         }
+
+
+        string type;
+        int slotIndex;
+        string uniqueID;
+        string name;
         
         inventorySlots = playerState.inventorySlots;
+        itemTracker = ItemTracker.Instance;
         InventoryUI.Instance.SetupInitialSlots(inventorySlots);
-        
-        foreach (var itemNameWithRarity in playerState.inventoryWithRarity)
+        Debug.LogWarning("No saved inventory found!");
+        foreach (var itemData in playerState.inventoryItemData)
         {
-            int slotIndex;
-            string itemName;
-            Rarity itemRarity;
-            BaseItem savedItem;
-            
-            string[] parts = itemNameWithRarity.Split(':');
-            
-            if (parts.Length == 3) // slotindex, name, rarity
+            string[] parts = itemData.Split(':');
+            Debug.LogWarning("Testing - pass");
+            if (parts.Length == 4) // slotindex, isWeapon, name
             {
-                slotIndex = int.Parse(parts[0]);
-                itemName = parts[1];
-                if (itemName == "EMPTY")
+                type = parts[0];
+                slotIndex = int.Parse(parts[1]);
+                uniqueID = parts[2];
+                name = parts[3];
+    
+                if (type == "ITEM")
                 {
-                    Debug.Log($"Skipping empty slot {slotIndex}");
-                    continue;
-                }
-                
-                if (System.Enum.TryParse(parts[2], out itemRarity))
-                {
-                    savedItem = ItemFactory.CreateItem(itemName, ItemDatabase.Instance.LoadItemIcon(itemName), itemRarity);
+                    BaseItem savedItem = ItemDatabase.CreateItem(name);
+                    savedItem.uniqueID = uniqueID;
                     InventoryUI.Instance.SetItemInSlot(slotIndex, savedItem);
-                    //itemsInInventory[itemName] = savedItem; 
-                    savedItemRarities.Add(itemName, itemRarity);
-                    itemsInInventory.Add(itemName, savedItem);
-                    Debug.Log($"Added new item: {savedItem.itemName} ({savedItem.currentRarity}).");
+                        
+                    var savedItemPayload = new ItemPayload()
+                    {
+                        weaponScript =  null,
+                        itemScript = savedItem,
+                        isWeapon = false
+                    };
+                    itemTracker.AssignItemToTracker(savedItemPayload, ItemLocation.Inventory, slotIndex);
+                    Debug.Log($"INVENTORY LOAD - Item: {savedItem.itemName}.");
                 }
                 else
                 {
-                    Debug.LogError($"Failed to parse rarity for {itemName}");
+                    Debug.LogWarning("No saved inventory found!");
+                    WeaponInstance savedWeapon = WeaponDatabase.Instance.CreateWeaponInstance(name);
+                    savedWeapon.uniqueID = uniqueID;
+                    InventoryUI.Instance.SetItemInSlot(slotIndex, null, savedWeapon);
+                       
+                    var savedWeaoponPayload = new ItemPayload()
+                    {
+                        weaponScript =  savedWeapon,
+                        itemScript = null,
+                        isWeapon = true
+                    };
+                    itemTracker.AssignItemToTracker(savedWeaoponPayload, ItemLocation.Inventory, slotIndex);
+                    Debug.Log($"INVENTORY LOAD - Weapon: {savedWeapon.weaponTitle}.");
                 }
             }
-            else
-            {
-                Debug.LogError("Invalid rarity format for item:");
-                return;
-            }
         }
-        Debug.Log("Inventory loaded from save.");
-    }
-    
-    public List<string> GetInventoryNamesWithRarity() //save state
-    {
-        //InventoryUI.Instance.SetupInitialSlots();
-        Debug.Log($"Saving inventory items. Total items: {savedItemRarities.Count}");
-        List<string> itemNamesWithRarity = new List<string>();
-        var slots = InventoryUI.Instance.GetInventorySlots();
-        
-        for (int i = 0; i < slots.Count; i++) // Iterate over each slot index
-        {
-            if (slots[i].IsFilled())
-            {
-                BaseItem item = slots[i].GetItemInSlot();
-                itemNamesWithRarity.Add($"{i}:{item.itemName}:{item.currentRarity}");
-                Debug.Log($"Saved item at slot {i}: {item.itemName} ({item.currentRarity})");
-            }
-            else
-            {
-                itemNamesWithRarity.Add($"{i}:EMPTY"); // Mark empty slots
-            }
-        }
-        
-        if (savedItemRarities.Count == 0)
-        {
-            Debug.LogWarning("No items in savedItemRarities! Inventory might not be updating correctly.");
-        }
-
-        //ResetInventory();
-        return itemNamesWithRarity;
-    }
-    
-    public void ResetInventory()
-    {
-        itemsInInventory.Clear();
-        //EventManager.Instance.TriggerEvent("InventoryUpdated", itemsInInventory);
+        Debug.Log("Inventory successfully loaded from save.");
     }
 }

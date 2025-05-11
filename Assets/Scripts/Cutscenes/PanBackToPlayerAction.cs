@@ -10,6 +10,7 @@ public class PanBackToPlayerAction : CutsceneAction
     public override IEnumerator Execute(CutsceneManager cutsceneManager, Action onComplete)
     {
         Transform player = PlayerManager.Instance.playerInstance.transform;
+        //Transform player = CutsceneManager.Instance.testPlayer.transform;
         if (player == null)
         {
             Debug.LogWarning("PanBackToPlayerAction: Player instance not found!");

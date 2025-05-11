@@ -14,7 +14,7 @@ public class AbilityUI : MonoBehaviour
     public void Initialize()
     {
         GameManager.Instance.RegisterDependency("AbilityUI", this);
-        EventManager.Instance.StartListening("AbilityUnlocked", AddAbilityToUI);
+        //EventManager.Instance.StartListening("AbilityUnlocked", AddAbilityToUI);
         SetupSlots();
     }
 
